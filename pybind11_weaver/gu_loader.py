@@ -66,7 +66,7 @@ def load_config(file_or_content: str):
     if os.path.exists(file_or_content):  # it is a file
         with open(file_or_content, "r") as yml:
             content = yml.read()
-            content = content.replace("${CFG_DIR}", os.path.abspath(file_or_content))
+            content = content.replace("${CFG_DIR}", os.path.dirname(os.path.abspath(file_or_content)))
             cfg = yaml.safe_load(content)
     else:  # it is a string
         cfg = yaml.safe_load(file_or_content)
