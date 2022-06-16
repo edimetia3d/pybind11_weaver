@@ -8,7 +8,7 @@ import copy
 import datetime
 import os.path
 import sysconfig
-from typing import List
+from typing import List, Tuple, Optional
 
 import yaml
 from clang import cindex
@@ -65,13 +65,15 @@ def cleanup_config(cfg):
 def load_config(file_or_content: str):
     if os.path.exists(file_or_content):  # it is a file
         with open(file_or_content, "r") as yml:
-            cfg = yaml.safe_load(yml)
+            content = yml.read()
+            content = content.replace("${CFG_DIR}", os.path.abspath(file_or_content))
+            cfg = yaml.safe_load(content)
     else:  # it is a string
         cfg = yaml.safe_load(file_or_content)
     return cleanup_config(cfg)
 
 
-def load_tu(file_list: List[str], cxx_flags: List[str]):
+def load_tu(file_list: List[str], cxx_flags: List[str]) -> Tuple[Optional[cindex.TranslationUnit], str]:
     def clean_file_list():
         files_cleand = []
         for f in file_list:
@@ -103,7 +105,7 @@ class GenUnit:
 
     def __init__(self, tu, src_files: List[str], options: Options):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        self.tu = tu
+        self.tu: cindex.TranslationUnit = tu
         self.src_files: List[str] = src_files
         self.options: GenUnit.Options = options
 
