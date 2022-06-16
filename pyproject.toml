@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools",
+    "setuptools-scm",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pybind11_weaver"
+description = "A fully customizable pybind11 generator to help generate code for exsiting c/c++ library."
+readme = "README.md"
+keywords = ["pybind11", "generator", "codegen", "gen", ]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Compilers"
+]
+dependencies = [
+    "libclang",
+    "pybind11",
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pybind11_weaver.__VERSION__" }
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["pybind11_weaver*"]
+
+[project.scripts]
+pybind11_weaver = "pybind11_weaver.main:main"
