@@ -7,6 +7,6 @@ common_config:
 # A list of dict that specifies files that needed to be generated
 io_configs:
   - inputs: [ ] # a list of path of header files
-    output: "/path/to/output" # Path to output file
+    output: "/path/to/output" # Path to output file's base name, two file of /path/to/output.h and /path/to/output.cc will be generated.
     namespace: "" # this will override the value in shared_config
     extra_cxx_flags: [ ] # these flags will be used only for this file

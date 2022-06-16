@@ -1,13 +1,13 @@
 import unittest
 
-from pybind11_weaver import gu_loader
+from pybind11_weaver import gen_unit
 
 
 class TuLoaderTest(unittest.TestCase):
 
     def test_get_default_include_flags(self):
         for compiler in ["g++", None]:
-            flags = gu_loader.get_default_include_flags(compiler)
+            flags = gen_unit.get_default_include_flags(compiler)
             self.assertGreater(len(flags), 0)
             for v in flags:
                 self.assertTrue(v.startswith("-I"))
@@ -26,7 +26,7 @@ io_configs:
       namespace: "bar::q"
       extra_cxx_flags: ["c","d"] 
 """
-        cfg = gu_loader.load_config(cfg)
+        cfg = gen_unit.load_config(cfg)
         self.assertIsNone(cfg["common_config"]["compiler"])
         self.assertEqual(cfg["common_config"]["cxx_flags"], ["a", "b"])
         self.assertEqual(cfg["common_config"]["include_directories"], ["/path/to/foo", "/path/to/bar"])
@@ -37,13 +37,13 @@ io_configs:
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], ["c", "d"])
 
     def test_load_default_config(self):
-        cfg = gu_loader.load_config("")
+        cfg = gen_unit.load_config("")
         self.assertIsNone(cfg["common_config"]["compiler"])
         self.assertEqual(cfg["common_config"]["cxx_flags"], [])
         self.assertEqual(cfg["common_config"]["include_directories"], [])
         self.assertEqual(cfg["common_config"]["namespace"], "")
         self.assertEqual(len(cfg["io_configs"]), 0)
-        cfg = gu_loader.load_config("""
+        cfg = gen_unit.load_config("""
 io_configs:
     - inputs: ["a.h"]
       output: "/path/to/output0"
@@ -60,14 +60,14 @@ io_configs:
         self.assertEqual(cfg["io_configs"][1]["namespace"], "")
 
     def test_gen_unit_load(self):
-        gen_units = gu_loader.load_gen_unit_from_config("""
+        gen_units = gen_unit.load_gen_unit_from_config("""
 io_configs:
     - inputs: [<iostream>]
       output: "/path/to/output"
     - inputs: [<cstdio>]
       output: "/path/to/output2"
 """
-                                                        )
+                                                       )
         self.assertEqual(len(gen_units), 2)
 
 

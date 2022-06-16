@@ -73,17 +73,19 @@ def load_config(file_or_content: str):
     return cleanup_config(cfg)
 
 
-def load_tu(file_list: List[str], cxx_flags: List[str]) -> Tuple[Optional[cindex.TranslationUnit], str]:
-    def clean_file_list():
-        files_cleand = []
-        for f in file_list:
-            if f.startswith('"') or f.startswith("<"):
-                files_cleand.append(f)
-            else:
-                files_cleand.append(f'"{f}"')
-        return files_cleand
+def _file_paths_to_include(file_list: List[str]):
+    files_cleand = []
+    for f in file_list:
+        if f.startswith('"') or f.startswith("<"):
+            files_cleand.append(f)
+        else:
+            files_cleand.append(f'"{f}"')
+    return "\n".join(["#include " + path for path in files_cleand])
 
-    content = "\n".join(["#include " + path for path in clean_file_list()])
+
+def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "") -> Tuple[
+    Optional[cindex.TranslationUnit], str]:
+    content = _file_paths_to_include(file_list) + extra_content
     index = cindex.Index.create()
     tu = index.parse("tmp.cpp",
                      unsaved_files=[("tmp.cpp", content)],
@@ -96,7 +98,7 @@ def load_tu(file_list: List[str], cxx_flags: List[str]) -> Tuple[Optional[cindex
         print(diag.option)
         load_fail = True
     if load_fail:
-        return None
+        return None, None
     return tu, content
 
 
@@ -108,6 +110,18 @@ class GenUnit:
         self.tu: cindex.TranslationUnit = tu
         self.src_files: List[str] = src_files
         self.options: GenUnit.Options = options
+
+    def src_file_tail_names(self):
+        files = []
+        for f in self.src_files:
+            if f.startswith("<") or f.startswith('"'):
+                files.append(f[1:-1])
+            else:
+                files.append(f)
+        return files
+
+    def src_file_includes(self):
+        return _file_paths_to_include(self.src_files)
 
 
 def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:

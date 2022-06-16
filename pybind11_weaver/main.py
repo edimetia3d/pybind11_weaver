@@ -1,6 +1,7 @@
 import argparse
 
-from pybind11_weaver import gu_loader
+from pybind11_weaver import entity
+from pybind11_weaver import gen_unit
 
 
 def parse_args():
@@ -16,7 +17,9 @@ ARGS = parse_args()
 
 
 def main():
-    gu_loader.load_gen_unit_from_config(ARGS.config)
+    gus = gen_unit.load_gen_unit_from_config(ARGS.config)
+    for gu in gus:
+        entity.get_all_entities(gu)
 
 
 if __name__ == "__main__":
