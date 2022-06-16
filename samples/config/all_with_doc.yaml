@@ -1,0 +1,12 @@
+common_config:
+  compiler: null # Path to compiler, if null, the first valid one in ["c++","g++","clang++"] will be used. It will be used to detect system level include directories
+  cxx_flags: [ "-std=c++11", ] # A list of cxx flags, It will be used to help frontend to parse the source file correctly.
+  include_directories: [ "/path/to/foo","/path/to/bar" ] # A list of extra include path, these paths will be converted to `-I` flags
+  namespace: "foo::bar" # A c++ style name space that output code should reside into
+
+# A list of dict that specifies files that needed to be generated
+io_configs:
+  - inputs: [ ] # a list of path of header files
+    output: "/path/to/output" # Path to output file
+    namespace: "" # this will override the value in shared_config
+    extra_cxx_flags: [ ] # these flags will be used only for this file
