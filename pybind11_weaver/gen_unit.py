@@ -10,6 +10,7 @@ import os.path
 import sysconfig
 from typing import List, Tuple, Optional
 
+import pybind11
 import yaml
 from clang import cindex
 
@@ -28,6 +29,7 @@ def get_default_include_flags(compiler_path: str = None) -> List[str]:
     assert len(cxx_sys_path) > 0, "Can not find c++ headers"
     full_list = [d.decode("utf-8") for d in cxx_sys_path] + [
         sysconfig.get_path("include"),
+        pybind11.get_include(),
     ]
     return ["-I" + path for path in full_list]
 

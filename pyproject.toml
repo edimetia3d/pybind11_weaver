@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
     "libclang",
     "PyYAML",
+    "pybind11",
 ]
 dynamic = ["version"]
 
