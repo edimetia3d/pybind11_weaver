@@ -28,7 +28,7 @@ def _add_optional_args(parser: argparse.ArgumentParser):
 def parse_args():
     parser = argparse.ArgumentParser(description="Pybind11 command line interface.")
     _add_optional_args(parser)
-    _handle_optional_args(parser.parse_args())
+    _handle_optional_args(parser.parse_known_args())
     _add_required_args(parser)
     return parser.parse_args()
 

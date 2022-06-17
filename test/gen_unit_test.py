@@ -18,22 +18,24 @@ common_config:
   compiler: null
   cxx_flags: [ "a","b" ]
   include_directories: [ "/path/to/foo","/path/to/bar" ]
-  namespace: "foo::bar"
+  output_namespace: "foo::bar"
+  root_module_namespace: "gi::jo"
 
 io_configs:
     - inputs: ["a.h"]
       output: "/path/to/output"
-      namespace: "bar::q"
+      output_namespace: "bar::q"
       extra_cxx_flags: ["c","d"] 
 """
         cfg = gen_unit.load_config(cfg)
         self.assertIsNone(cfg["common_config"]["compiler"])
         self.assertEqual(cfg["common_config"]["cxx_flags"], ["a", "b"])
         self.assertEqual(cfg["common_config"]["include_directories"], ["/path/to/foo", "/path/to/bar"])
-        self.assertEqual(cfg["common_config"]["namespace"], "foo::bar")
+        self.assertEqual(cfg["common_config"]["output_namespace"], "foo::bar")
+        self.assertEqual(cfg["common_config"]["root_module_namespace"], "gi::jo")
         self.assertEqual(cfg["io_configs"][0]["inputs"], ["a.h"])
         self.assertEqual(cfg["io_configs"][0]["output"], "/path/to/output")
-        self.assertEqual(cfg["io_configs"][0]["namespace"], "bar::q")
+        self.assertEqual(cfg["io_configs"][0]["output_namespace"], "bar::q")
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], ["c", "d"])
 
     def test_load_default_config(self):
@@ -41,7 +43,8 @@ io_configs:
         self.assertIsNone(cfg["common_config"]["compiler"])
         self.assertEqual(cfg["common_config"]["cxx_flags"], [])
         self.assertEqual(cfg["common_config"]["include_directories"], [])
-        self.assertEqual(cfg["common_config"]["namespace"], "")
+        self.assertEqual(cfg["common_config"]["output_namespace"], "")
+        self.assertEqual(cfg["common_config"]["root_module_namespace"], "")
         self.assertEqual(len(cfg["io_configs"]), 0)
         cfg = gen_unit.load_config("""
 io_configs:
@@ -53,11 +56,11 @@ io_configs:
         self.assertEqual(cfg["io_configs"][0]["inputs"], ["a.h"])
         self.assertEqual(cfg["io_configs"][0]["output"], "/path/to/output0")
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], [])
-        self.assertEqual(cfg["io_configs"][0]["namespace"], "")
+        self.assertIsNone(cfg["io_configs"][0]["output_namespace"])
         self.assertEqual(cfg["io_configs"][1]["inputs"], ["b.h"])
         self.assertEqual(cfg["io_configs"][1]["output"], "/path/to/output1")
         self.assertEqual(cfg["io_configs"][1]["extra_cxx_flags"], [])
-        self.assertEqual(cfg["io_configs"][1]["namespace"], "")
+        self.assertIsNone(cfg["io_configs"][1]["output_namespace"])
 
     def test_gen_unit_load(self):
         gen_units = gen_unit.load_gen_unit_from_config("""
