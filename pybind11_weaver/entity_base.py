@@ -45,3 +45,19 @@ class EntityBase(abc.ABC):
     @abc.abstractmethod
     def get_spelling(self) -> str:
         pass
+
+    @abc.abstractmethod
+    def get_unique_name(self) -> str:
+        pass
+
+    @abc.abstractmethod
+    def declare_expr(self, module_sym: str) -> str:
+        pass
+
+    @abc.abstractmethod
+    def update_stmts(self, sym: str) -> str:
+        pass
+
+    @abc.abstractmethod
+    def pybind11_type_str(self) -> str:
+        pass
