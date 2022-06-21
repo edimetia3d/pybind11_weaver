@@ -1,33 +1,34 @@
 #ifndef GITHUB_COM_PYBIND11_WEAVER
 #define GITHUB_COM_PYBIND11_WEAVER
 
-#include <functional>
-#include <vector>
-#include <set>
+#include <string>
+#include <map>
 
 #include <pybind11/pybind11.h>
 
 namespace pybind11_weaver {
 
-using EntityBindingFn = std::function<void(pybind11::module_ *)>;
+struct EntityMap {
+  static void Set(const std::string &key, pybind11::object &obj) {
+    assert(GetMap().count(key) == 0);
+    GetMap()[key] = obj;
+  }
 
-/**
- * An Entity is the interface to create a pybind11-binding into a module
- */
-struct Entity {
-  std::string name;
-  EntityBindingFn bind_fn;
-  std::vector<std::string> deps_name;
-  std::string target_submodule = "";
+  static pybind11::object Get(const std::string &key) {
+    assert(GetMap().count(key) != 0);
+    return GetMap()[key];
+  }
+  static void Clear() {
+    GetMap().clear();
+  }
+
+private:
+  template<class T = void>
+  static std::map<std::string, pybind11::object> &GetMap() {
+    static std::map<std::string, pybind11::object> map;
+    return map;
+  }
 };
 
-/**
- * Sort all entities into a topological order, so when `entity->bind_fn` is called, all its deps will have been bind
- * already.
- * @param all_entities A set of entities
- * @return sorted entities
- */
-template<class = void>
-std::vector<Entity *> TopoSort(const std::set<Entity *> &all_entities);
-}
+} // namespace pybind11_weaver
 #endif // GITHUB_COM_PYBIND11_WEAVER
