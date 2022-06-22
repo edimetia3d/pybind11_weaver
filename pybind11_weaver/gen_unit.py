@@ -52,14 +52,13 @@ def cleanup_config(cfg):
         "compiler": None,
         "cxx_flags": [],
         "include_directories": [],
-        "output_namespace": "",
         "root_module_namespace": ""
     })
     for entry in cfg["io_configs"]:
         safe_update(entry, {
             "inputs": [],
             "output": "",
-            "output_namespace": None,
+            "decl_fn_name": "DeclFn",
             "extra_cxx_flags": [],
         })
     return cfg
@@ -106,7 +105,7 @@ def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "")
 
 
 class GenUnit:
-    Options = collections.namedtuple("Options", ("output", "output_namespace"))
+    Options = collections.namedtuple("Options", ("output", "decl_fn_name"))
 
     def __init__(self, tu, src_files: List[str], options: Options):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -132,15 +131,11 @@ def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
     default_headers = get_default_include_flags(cfg["common_config"]["compiler"])
     common_flags = cfg["common_config"]["cxx_flags"] + default_headers
     common_flags = common_flags + ["-I" + path for path in cfg["common_config"]["include_directories"]]
-    default_workspace = cfg["common_config"]["output_namespace"]
     ret = []
     for entry in cfg["io_configs"]:
         src_tu, _ = load_tu(entry["inputs"], common_flags + entry["extra_cxx_flags"])
         assert src_tu is not None
-        entry_workspace = entry["output_namespace"]
-        if entry_workspace is None:
-            entry_workspace = default_workspace
         ret.append(
             GenUnit(src_tu, entry["inputs"],
-                    GenUnit.Options(output=entry["output"], output_namespace=entry_workspace)))
+                    GenUnit.Options(output=entry["output"], decl_fn_name=entry["decl_fn_name"])))
     return ret

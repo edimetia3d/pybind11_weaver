@@ -56,7 +56,7 @@ struct Entity{uuid} {{
 """
 
 file_template = """
-// GENERATED at {date}
+// GENERATED AT {date}
 
 {include_directives}
 
@@ -64,9 +64,6 @@ file_template = """
 
 namespace {{
 {entity_struct_decls}
-}}
-
-{def_namespace_beg}
 
 pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
 {create_entity_var_stmts}
@@ -76,7 +73,9 @@ pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
     }};
     return {{update_fn}};
 }}
-{def_namespace_end}
+
+}} // anonymous namespace
+
 """
 
 
@@ -117,21 +116,16 @@ def main():
         entity_mgr = entity.EntityManager()
         entity_mgr.load_from_gu(gu)
         entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts = create_decl_fn(entity_mgr.entities())
-        namespace_beg = "namespace {"
-        namespace_end = "}"
-        if gu.options.output_namespace is not None:
-            namespace_beg = f"namespace {gu.options.output_namespace}{{"
         file_content = file_template.format(
             date=gu.creation_time,
             include_directives="\n".join(gu.src_file_includes()),
-            def_namespace_beg=namespace_beg,
-            def_namespace_end=namespace_end,
-            decl_fn_name="Foo",
+            decl_fn_name=gu.options.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
             update_entity_var_stmts="\n".join(update_entity_var_stmts),
         )
-        print(file_content)
+        with open(gu.options.output, "w") as f:
+            f.write(file_content)
 
 
 if __name__ == "__main__":

@@ -6,4 +6,5 @@ common_config:
 
 io_configs:
   - inputs: [ "sample.h" ]
-    output: "${CFG_DIR}/sample.gen.cpp"
+    output: "${CFG_DIR}/sample.cc.inc"
+    decl_fn_name: "DeclEnums"
