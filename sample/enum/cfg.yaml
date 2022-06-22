@@ -1,10 +1,7 @@
 common_config:
-  namespace: "pb11::gen"
   cxx_flags: [ "-std=c++17", ]
   include_directories: [ "${CFG_DIR}" ]
-  root_module_namespace: "earth"
 
 io_configs:
   - inputs: [ "sample.h" ]
     output: "${CFG_DIR}/sample.cc.inc"
-    decl_fn_name: "DeclEnums"

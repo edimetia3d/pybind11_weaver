@@ -1,5 +1,5 @@
 
-// GENERATED AT 06/22/2022, 15:24:13
+// GENERATED AT 06/22/2022, 17:46:06
 
 #include "sample.h"
 
@@ -7,14 +7,14 @@
 
 namespace {
 
-struct Entity0 {
+struct Entity_earth {
   using HandleT = pybind11::module_; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity0(ParentT &&parent_h):handle{std::forward<ParentT>(parent_h).def_submodule("earth")} {
+  explicit Entity_earth(ParentT &&parent_h):handle{std::forward<ParentT>(parent_h).def_submodule("earth")} {
   }
 
-  Entity0(Entity0 &&) = delete;
-  Entity0(const Entity0 &) = delete;
+  Entity_earth(Entity_earth &&) = delete;
+  Entity_earth(const Entity_earth &) = delete;
 
   void Update() {
     //Binding codes here
@@ -24,14 +24,15 @@ struct Entity0 {
   [[maybe_unused]] const char *qualified_name = "earth"; // User MUST NOT modify this decl
 };
 
-struct Entity1 {
+struct Entity_earth_creatures {
   using HandleT = pybind11::module_; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity1(ParentT &&parent_h):handle{std::forward<ParentT>(parent_h).def_submodule("creatures")} {
+  explicit Entity_earth_creatures(ParentT &&parent_h):handle{
+      std::forward<ParentT>(parent_h).def_submodule("creatures")} {
   }
 
-  Entity1(Entity1 &&) = delete;
-  Entity1(const Entity1 &) = delete;
+  Entity_earth_creatures(Entity_earth_creatures &&) = delete;
+  Entity_earth_creatures(const Entity_earth_creatures &) = delete;
 
   void Update() {
     //Binding codes here
@@ -41,15 +42,15 @@ struct Entity1 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures"; // User MUST NOT modify this decl
 };
 
-struct Entity2 {
+struct Entity_earth_creatures_Animal {
   using HandleT = pybind11::enum_<earth::creatures::Animal>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity2(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_Animal(ParentT &&parent_h):handle{
       pybind11::enum_<earth::creatures::Animal>(std::forward<ParentT>(parent_h), "Animal", pybind11::arithmetic())} {
   }
 
-  Entity2(Entity2 &&) = delete;
-  Entity2(const Entity2 &) = delete;
+  Entity_earth_creatures_Animal(Entity_earth_creatures_Animal &&) = delete;
+  Entity_earth_creatures_Animal(const Entity_earth_creatures_Animal &) = delete;
 
   void Update() {
     //Binding codes here
@@ -60,15 +61,15 @@ struct Entity2 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::Animal"; // User MUST NOT modify this decl
 };
 
-struct Entity3 {
+struct Entity_earth_creatures_Plant {
   using HandleT = pybind11::enum_<earth::creatures::Plant>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity3(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_Plant(ParentT &&parent_h):handle{
       pybind11::enum_<earth::creatures::Plant>(std::forward<ParentT>(parent_h), "Plant", pybind11::arithmetic())} {
   }
 
-  Entity3(Entity3 &&) = delete;
-  Entity3(const Entity3 &) = delete;
+  Entity_earth_creatures_Plant(Entity_earth_creatures_Plant &&) = delete;
+  Entity_earth_creatures_Plant(const Entity_earth_creatures_Plant &) = delete;
 
   void Update() {
     //Binding codes here
@@ -79,17 +80,17 @@ struct Entity3 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::Plant"; // User MUST NOT modify this decl
 };
 
-struct Entity4 {
+struct Entity_earth_creatures_ValueSet {
   using HandleT = pybind11::enum_<earth::creatures::ValueSet>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity4(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_ValueSet(ParentT &&parent_h):handle{
       pybind11::enum_<earth::creatures::ValueSet>(std::forward<ParentT>(parent_h),
                                                   "ValueSet",
                                                   pybind11::arithmetic())} {
   }
 
-  Entity4(Entity4 &&) = delete;
-  Entity4(const Entity4 &) = delete;
+  Entity_earth_creatures_ValueSet(Entity_earth_creatures_ValueSet &&) = delete;
+  Entity_earth_creatures_ValueSet(const Entity_earth_creatures_ValueSet &) = delete;
 
   void Update() {
     //Binding codes here
@@ -101,15 +102,15 @@ struct Entity4 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::ValueSet"; // User MUST NOT modify this decl
 };
 
-struct Entity5 {
+struct Entity_earth_creatures_Home {
   using HandleT = pybind11::class_<earth::creatures::Home>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity5(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_Home(ParentT &&parent_h):handle{
       pybind11::class_<earth::creatures::Home>(std::forward<ParentT>(parent_h), "Home")} {
   }
 
-  Entity5(Entity5 &&) = delete;
-  Entity5(const Entity5 &) = delete;
+  Entity_earth_creatures_Home(Entity_earth_creatures_Home &&) = delete;
+  Entity_earth_creatures_Home(const Entity_earth_creatures_Home &) = delete;
 
   void Update() {
     //Binding codes here
@@ -119,15 +120,15 @@ struct Entity5 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::Home"; // User MUST NOT modify this decl
 };
 
-struct Entity6 {
+struct Entity_earth_creatures_Home_Tool {
   using HandleT = pybind11::enum_<earth::creatures::Home::Tool>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity6(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_Home_Tool(ParentT &&parent_h):handle{
       pybind11::enum_<earth::creatures::Home::Tool>(std::forward<ParentT>(parent_h), "Tool", pybind11::arithmetic())} {
   }
 
-  Entity6(Entity6 &&) = delete;
-  Entity6(const Entity6 &) = delete;
+  Entity_earth_creatures_Home_Tool(Entity_earth_creatures_Home_Tool &&) = delete;
+  Entity_earth_creatures_Home_Tool(const Entity_earth_creatures_Home_Tool &) = delete;
 
   void Update() {
     //Binding codes here
@@ -138,15 +139,15 @@ struct Entity6 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::Home::Tool"; // User MUST NOT modify this decl
 };
 
-struct Entity7 {
+struct Entity_earth_creatures_Home_Food {
   using HandleT = pybind11::enum_<earth::creatures::Home::Food>; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity7(ParentT &&parent_h):handle{
+  explicit Entity_earth_creatures_Home_Food(ParentT &&parent_h):handle{
       pybind11::enum_<earth::creatures::Home::Food>(std::forward<ParentT>(parent_h), "Food", pybind11::arithmetic())} {
   }
 
-  Entity7(Entity7 &&) = delete;
-  Entity7(const Entity7 &) = delete;
+  Entity_earth_creatures_Home_Food(Entity_earth_creatures_Home_Food &&) = delete;
+  Entity_earth_creatures_Home_Food(const Entity_earth_creatures_Home_Food &) = delete;
 
   void Update() {
     //Binding codes here
@@ -157,25 +158,29 @@ struct Entity7 {
   [[maybe_unused]] const char *qualified_name = "earth::creatures::Home::Food"; // User MUST NOT modify this decl
 };
 
-pybind11_weaver::CallUpdateGuard DeclEnums(pybind11::module &m) {
-  auto v0_earth = std::make_shared<Entity0>(m);
-  auto v1_creatures = std::make_shared<Entity1>(v0_earth->handle);
-  auto v2_Animal = std::make_shared<Entity2>(v1_creatures->handle);
-  auto v3_Plant = std::make_shared<Entity3>(v1_creatures->handle);
-  auto v4_ValueSet = std::make_shared<Entity4>(v1_creatures->handle);
-  auto v5_Home = std::make_shared<Entity5>(v1_creatures->handle);
-  auto v6_Tool = std::make_shared<Entity6>(v5_Home->handle);
-  auto v7_Food = std::make_shared<Entity7>(v5_Home->handle);
+/**
+* Create all entities, return a callable guard that can be called to update all entities.
+* If the returned guard is not called, the guard will call the update function on its destruction.
+**/
+[[nodiscard]] pybind11_weaver::CallUpdateGuard DeclFn(pybind11::module &m) {
+  auto v0 = std::make_shared<Entity_earth>(m);
+  auto v1 = std::make_shared<Entity_earth_creatures>(v0->handle);
+  auto v2 = std::make_shared<Entity_earth_creatures_Animal>(v1->handle);
+  auto v3 = std::make_shared<Entity_earth_creatures_Plant>(v1->handle);
+  auto v4 = std::make_shared<Entity_earth_creatures_ValueSet>(v1->handle);
+  auto v5 = std::make_shared<Entity_earth_creatures_Home>(v1->handle);
+  auto v6 = std::make_shared<Entity_earth_creatures_Home_Tool>(v5->handle);
+  auto v7 = std::make_shared<Entity_earth_creatures_Home_Food>(v5->handle);
 
   auto update_fn = [=]() {
-    v0_earth->Update();
-    v1_creatures->Update();
-    v2_Animal->Update();
-    v3_Plant->Update();
-    v4_ValueSet->Update();
-    v5_Home->Update();
-    v6_Tool->Update();
-    v7_Food->Update();
+    v0->Update();
+    v1->Update();
+    v2->Update();
+    v3->Update();
+    v4->Update();
+    v5->Update();
+    v6->Update();
+    v7->Update();
   };
   return {update_fn};
 }

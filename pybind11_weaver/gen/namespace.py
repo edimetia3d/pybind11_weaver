@@ -12,7 +12,7 @@ class NamespaceEntity(entity_base.EntityBase):
         assert cursor.kind == cindex.CursorKind.NAMESPACE
 
     def get_unique_name(self) -> str:
-        return "::".join(self.get_scope().scopes + [self.get_spelling()])
+        return "_".join(self.get_scope().scopes + [self.get_spelling()])
 
     def declare_expr(self, module_sym: str) -> str:
         code = f'{module_sym}.def_submodule("{self.get_spelling()}")'

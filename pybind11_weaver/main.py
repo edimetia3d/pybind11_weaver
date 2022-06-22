@@ -37,14 +37,14 @@ def parse_args():
 ARGS = parse_args()
 
 entity_template = """
-struct Entity{uuid} {{
+struct {entity_struct_name} {{
   using HandleT = {handle_type}; // User are free to modify HandleT
   template<class ParentT>
-  explicit Entity{uuid}(ParentT && parent_h):handle{{ {init_handle_expr} }}{{
+  explicit {entity_struct_name}(ParentT && parent_h):handle{{ {init_handle_expr} }}{{
   }}
 
-  Entity{uuid}(Entity{uuid} &&) = delete;
-  Entity{uuid}(const Entity{uuid} &) = delete;
+  {entity_struct_name}({entity_struct_name} &&) = delete;
+  {entity_struct_name}(const {entity_struct_name} &) = delete;
   
   void Update(){{
     //Binding codes here
@@ -65,7 +65,11 @@ file_template = """
 namespace {{
 {entity_struct_decls}
 
-pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
+/**
+* Create all entities, return a callable guard that can be called to update all entities.
+* If the returned guard is not called, the guard will call the update function on its destruction.
+**/
+[[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
 {create_entity_var_stmts}
 
     auto update_fn = [=](){{
@@ -79,30 +83,31 @@ pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
 """
 
 
-def create_decl_fn(entities: Dict[str, entity.EntityManager.EntityEntry], parent_sym="m", beg_id=0):
+def create_decl_fn(entities: Dict[str, entity.EntityManager.EntityEntry], parent_sym: str, beg_id: int):
     id = beg_id
     entity_struct_decls: List[str] = []
     create_entity_var_stmts: List[str] = []
     update_entity_var_stmts: List[str] = []
     for _, entity_entry in entities.items():
-        entity_sym = f"v{id}_{entity_entry.name}"
+        entity_obj_sym = f"v{id}"
+        entity_struct_name = "Entity_" + entity_entry.entity.get_unique_name()
         assert entity_entry.entity is not None
         init_expr = entity_entry.entity.declare_expr("std::forward<ParentT>(parent_h)")
         type_str = entity_entry.entity.pybind11_type_str()
         binds_stmts = entity_entry.entity.update_stmts("handle")
         struct_decl = entity_template.format(
             handle_type=type_str,
-            uuid=id,
+            entity_struct_name=entity_struct_name,
             parent_expr=parent_sym,
             init_handle_expr=init_expr,
             binding_stmts="\n".join(binds_stmts),
             qualified_name=entity_entry.qualified_name)
         entity_struct_decls.append(struct_decl)
         create_entity_var_stmts.append(
-            f"auto {entity_sym} = std::make_shared<Entity{id}>({parent_sym});")
-        update_entity_var_stmts.append(f"{entity_sym}->Update();")
+            f"auto {entity_obj_sym} = std::make_shared<{entity_struct_name}>({parent_sym});")
+        update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")
         id = id + 1
-        ret = create_decl_fn(entities[entity_entry.name].children, entity_sym + "->handle", id)
+        ret = create_decl_fn(entities[entity_entry.name].children, entity_obj_sym + "->handle", id)
         entity_struct_decls += ret[0]
         create_entity_var_stmts += ret[1]
         update_entity_var_stmts += ret[2]
@@ -115,7 +120,13 @@ def main():
     for gu in gus:
         entity_mgr = entity.EntityManager()
         entity_mgr.load_from_gu(gu)
-        entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts = create_decl_fn(entity_mgr.entities())
+        target_entities = entity_mgr.entities()
+        if gu.options.root_module_namespace != "":
+            ns_s = gu.options.root_module_namespace.split("::")
+            for ns in ns_s:
+                target_entities = target_entities[ns].children
+        entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts = create_decl_fn(entities=target_entities,
+                                                                                               parent_sym="m", beg_id=0)
         file_content = file_template.format(
             date=gu.creation_time,
             include_directives="\n".join(gu.src_file_includes()),

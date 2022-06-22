@@ -4,5 +4,5 @@
 #include "sample.cc.inc"
 
 PYBIND11_MODULE(enum_module, m) {
-  auto update_guard = DeclEnums(m);
+  auto update_guard = DeclFn(m);
 }

@@ -12,7 +12,7 @@ class EnumEntity(entity_base.EntityBase):
         assert cursor.kind == cindex.CursorKind.ENUM_DECL
 
     def get_unique_name(self) -> str:
-        return self.cursor.type.spelling
+        return self.cursor.type.spelling.replace("::", "_")
 
     def declare_expr(self, module_sym: str) -> str:
         code = f"{self.pybind11_type_str()}({module_sym}, \"{self.get_spelling()}\",pybind11::arithmetic())"

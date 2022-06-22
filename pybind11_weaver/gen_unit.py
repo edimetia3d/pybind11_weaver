@@ -52,13 +52,13 @@ def cleanup_config(cfg):
         "compiler": None,
         "cxx_flags": [],
         "include_directories": [],
-        "root_module_namespace": ""
     })
     for entry in cfg["io_configs"]:
         safe_update(entry, {
             "inputs": [],
             "output": "",
             "decl_fn_name": "DeclFn",
+            "root_module_namespace": "",
             "extra_cxx_flags": [],
         })
     return cfg
@@ -105,7 +105,7 @@ def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "")
 
 
 class GenUnit:
-    Options = collections.namedtuple("Options", ("output", "decl_fn_name"))
+    Options = collections.namedtuple("Options", ("output", "decl_fn_name", "root_module_namespace"))
 
     def __init__(self, tu, src_files: List[str], options: Options):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -137,5 +137,7 @@ def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
         assert src_tu is not None
         ret.append(
             GenUnit(src_tu, entry["inputs"],
-                    GenUnit.Options(output=entry["output"], decl_fn_name=entry["decl_fn_name"])))
+                    GenUnit.Options(output=entry["output"],
+                                    decl_fn_name=entry["decl_fn_name"],
+                                    root_module_namespace=entry["root_module_namespace"])))
     return ret

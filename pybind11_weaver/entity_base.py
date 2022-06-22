@@ -46,6 +46,7 @@ class EntityBase(abc.ABC):
 
     @abc.abstractmethod
     def get_unique_name(self) -> str:
+        """Unique name should be able to used as source code identifier."""
         pass
 
     @abc.abstractmethod
