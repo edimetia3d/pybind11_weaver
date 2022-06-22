@@ -11,17 +11,11 @@ class EnumEntity(entity_base.EntityBase):
         entity_base.EntityBase.__init__(self, cursor)
         assert cursor.kind == cindex.CursorKind.ENUM_DECL
 
-    def get_scope(self) -> entity_base.ScopeList:
-        return entity_base.ScopeList(self.cursor)
-
-    def get_spelling(self) -> str:
-        return self.cursor.spelling
-
     def get_unique_name(self) -> str:
         return self.cursor.type.spelling
 
     def declare_expr(self, module_sym: str) -> str:
-        code = f"{self.pybind11_type_str()}({module_sym}, \"{self.cursor.spelling}\",pybind11::arithmetic())"
+        code = f"{self.pybind11_type_str()}({module_sym}, \"{self.get_spelling()}\",pybind11::arithmetic())"
         return code
 
     def update_stmts(self, sym: str) -> List[str]:

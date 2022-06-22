@@ -4,7 +4,7 @@ from clang import cindex
 
 from pybind11_weaver import entity_base
 from pybind11_weaver import gen_unit
-from pybind11_weaver.gen import enum
+from pybind11_weaver.gen import enum, klass, namespace
 
 
 class EntityManager:
@@ -33,7 +33,7 @@ class EntityManager:
         # For the scope issue before, the entry may already be created before
         spelling = entity.get_spelling()
         if spelling not in target_scope:
-            target_scope[spelling] = EntityManager.EntityEntry(spelling, entity, "::".join(name_history))
+            target_scope[spelling] = EntityManager.EntityEntry(spelling, entity, "::".join(name_history + [spelling]))
         else:
             assert target_scope[spelling].entity is None, "Entity already registered: {}".format(
                 entity.get_scope().str() + "::" + spelling)
@@ -53,11 +53,18 @@ class EntityManager:
         return self.__entities
 
 
+_KIND = cindex.CursorKind
+
+
 def create_entity(cursor: cindex.Cursor):
     kind = cursor.kind
-    KIND = cindex.CursorKind
-    if kind == KIND.ENUM_DECL:
+
+    if kind == _KIND.ENUM_DECL:
         return enum.EnumEntity(cursor)
+    if kind == cursor.kind == _KIND.NAMESPACE:
+        return namespace.NamespaceEntity(cursor)
+    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL]:
+        return klass.ClassEntity(cursor)
     return None
 
 

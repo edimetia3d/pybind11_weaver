@@ -38,13 +38,11 @@ class EntityBase(abc.ABC):
     def __init__(self, cursor: cindex.Cursor):
         self.cursor = cursor
 
-    @abc.abstractmethod
     def get_scope(self) -> ScopeList:
-        pass
+        return ScopeList(self.cursor)
 
-    @abc.abstractmethod
     def get_spelling(self) -> str:
-        pass
+        return self.cursor.spelling
 
     @abc.abstractmethod
     def get_unique_name(self) -> str:

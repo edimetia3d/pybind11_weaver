@@ -76,19 +76,19 @@ def load_config(file_or_content: str):
     return cleanup_config(cfg)
 
 
-def _file_paths_to_include(file_list: List[str]):
+def _file_paths_to_include(file_list: List[str]) -> List[str]:
     files_cleand = []
     for f in file_list:
         if f.startswith('"') or f.startswith("<"):
             files_cleand.append(f)
         else:
             files_cleand.append(f'"{f}"')
-    return "\n".join(["#include " + path for path in files_cleand])
+    return ["#include " + path for path in files_cleand]
 
 
 def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "") -> Tuple[
     Optional[cindex.TranslationUnit], str]:
-    content = _file_paths_to_include(file_list) + extra_content
+    content = "\n".join(_file_paths_to_include(file_list)) + extra_content
     index = cindex.Index.create()
     tu = index.parse("tmp.cpp",
                      unsaved_files=[("tmp.cpp", content)],
@@ -123,7 +123,7 @@ class GenUnit:
                 files.append(f)
         return files
 
-    def src_file_includes(self):
+    def src_file_includes(self) -> List[str]:
         return _file_paths_to_include(self.src_files)
 
 
