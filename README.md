@@ -42,12 +42,21 @@ Create python binding for a huge developing library brings some challenges:
    However, python-binding do not need to carry such a burden, we could just re-design the struct to fit the python
    convention.
    So, **some part of the binding must be written by hand**.
-4. **Huge** itself brings complexity, it is hard to make a generator smart enough to generate every part of the binding
-   code. There must be a time that generator does not work as expected, we should be able to write binding code by hand
-   then.
+4. **Huge** itself brings complexity. It is hard to make a generator smart enough to generate everything, so there must
+   be a time that generator does not fit your needs, we should be able to write binding code by hand then.
 
 For these reasons, We decided to create a tool. So we can write the binding code by hand, as much as we want, and let
 the tool generate the rest. If this kind of usage follows your need, this project will be very happy to help you.
+
+Recommended Usage:
+
+1. Write binding code as you need. If you don't know what you need, just write nothing, you can do it later when you
+   found some. Create a `cfg.yaml` file to describe what needs to be generated.
+2. Use the generator to generate `inc` files.
+3. Create a `binding.cc`, include all the `inc` file, call all the binding code.
+4. Compile all code into a binary, and you are done.
+5. Optionally, you can use the [pybind11-stubgen](https://github.com/sizmailov/pybind11-stubgen) to generate
+   `.pyi` stub files, it will make your binding more readable to both human and MYPY in a static way.
 
 ## Installation
 
@@ -60,5 +69,6 @@ the tool generate the rest. If this kind of usage follows your need, this projec
 ```bash
 git clone https://github.com/edimetia3d/pybind11_weaver
 export PYTHONPATH=$PYTHONPATH:$(pwd)/pybind11_weaver
+python -m pip install $(pwd)/pybind11_weaver/ # install dependencies
 alias pybind11_weaver=$(pwd)/pybind11_weaver/pybind11_weaver/main.py
 ```
