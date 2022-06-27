@@ -62,13 +62,22 @@ Recommended Usage:
 
 ### PYPI
 
-`pip install pybind11-weaver`
+`python3 -m pip install pybind11-weaver`
 
 ### From Source
 
+* Install from source
+
 ```bash
 git clone https://github.com/edimetia3d/pybind11_weaver
+python3 -m pip install $(pwd)/pybind11_weaver/
+```
+
+* Run from source (Editable/Develop Mode)
+
+```bash
+git clone https://github.com/edimetia3d/pybind11_weaver
+python3 -m pip install $(pwd)/pybind11_weaver/ && python3 -m pip uninstall pybind11_weaver # A hacky way to install dependencies
 export PYTHONPATH=$PYTHONPATH:$(pwd)/pybind11_weaver
-python -m pip install $(pwd)/pybind11_weaver/ # install dependencies
 alias pybind11_weaver=$(pwd)/pybind11_weaver/pybind11_weaver/main.py
 ```
