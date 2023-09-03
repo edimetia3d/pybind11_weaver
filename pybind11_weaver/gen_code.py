@@ -58,7 +58,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
     for _, entity in entities.items():
         assert entity is not None
         entity_obj_sym = f"v{id}"
-        entity_struct_name = "Entity_" + entity.get_unique_name()
+        entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
         # generate body
         struct_decl = entity_template.format(
             handle_type=entity.pybind11_type_str(),

@@ -11,7 +11,7 @@ class NamespaceEntity(entity_base.Entity):
         entity_base.Entity.__init__(self, cursor)
         assert cursor.kind == cindex.CursorKind.NAMESPACE
 
-    def get_unique_name(self) -> str:
+    def get_cpp_struct_name(self) -> str:
         return "_".join(self.get_scope() + [self.name])
 
     def create_pybind11_obj_expr(self, module_sym: str) -> str:

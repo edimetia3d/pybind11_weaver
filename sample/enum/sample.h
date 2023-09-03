@@ -1,7 +1,12 @@
 #ifndef PYBIND11_WEAVER_SAMPLE_H
 #define PYBIND11_WEAVER_SAMPLE_H
+
+#include <string>
+
+void TopFunction(int);
 namespace earth::creatures {
 
+    int NSFunction(const std::string & str);
     /// This is Animal doc
     enum Animal {
         DOG, ///< Dog doc

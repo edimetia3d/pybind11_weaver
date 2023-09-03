@@ -2,6 +2,7 @@ from . import entity_base
 from . import enum
 from . import klass
 from . import namespace
+from . import funktion
 
 from clang import cindex
 
@@ -25,4 +26,7 @@ def create_entity(cursor: cindex.Cursor):
         return namespace.NamespaceEntity(cursor)
     if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL]:
         return klass.ClassEntity(cursor)
+    if kind == _KIND.FUNCTION_DECL:
+        return funktion.FunctionEntity(cursor)
+
     return None

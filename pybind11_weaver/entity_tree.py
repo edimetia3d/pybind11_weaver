@@ -5,6 +5,7 @@ from clang import cindex
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
 from pybind11_weaver.entity import entity_base
+from pybind11_weaver.entity import funktion
 
 
 class _DummyNode(entity_base.Entity):
@@ -12,7 +13,7 @@ class _DummyNode(entity_base.Entity):
     def __init__(self, cursor: cindex.Cursor):
         entity_base.Entity.__init__(self, cursor)
 
-    def get_unique_name(self) -> str:
+    def get_cpp_struct_name(self) -> str:
         raise NotImplementedError
 
     def create_pybind11_obj_expr(self, module_sym: str) -> str:
@@ -45,11 +46,16 @@ class EntityTree:
             outer = outer[name]
 
         # setup entity
-        if entity.name in outer:
-            assert outer[entity.name].cursor is None
-            outer[entity.name].transfer(entity)
+        entity_name = entity.name
+        if entity_name in outer:
+            if outer[entity_name].cursor is None:
+                outer[entity_name].transfer(entity)
+            else:
+                assert isinstance(entity, funktion.FunctionEntity)
+                assert isinstance(outer[entity_name], funktion.FunctionEntity)
+                outer[entity_name].overloads.append(entity.cursor)
         else:
-            outer[entity.name] = entity
+            outer[entity_name] = entity
         if not outer is self.entities:
             entity.update_parent(outer)
 
@@ -73,4 +79,4 @@ class EntityTree:
             if cursor_filename.endswith(tail):
                 in_src = True
                 break
-        return in_src and cursor.is_definition() and cursor.linkage == cindex.LinkageKind.EXTERNAL
+        return in_src and cursor.linkage == cindex.LinkageKind.EXTERNAL

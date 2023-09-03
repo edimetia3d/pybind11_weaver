@@ -57,14 +57,15 @@ class Entity(abc.ABC):
     def name(self):
         return self.cursor.spelling
 
+    @functools.lru_cache
     def qualified_name(self) -> str:
-        return "::".join(scope_list.ScopeList(self.cursor).scopes + [self.name])
+        return scope_list.get_full_qualified_name(self.cursor)
 
     def get_scope(self) -> List[str]:
-        return scope_list.ScopeList(self.cursor).scopes
+        return scope_list.get_full_qualified_scopes(self.cursor)
 
     @abc.abstractmethod
-    def get_unique_name(self) -> str:
+    def get_cpp_struct_name(self) -> str:
         """Unique name of the entity, must be able to used as a C++ identifier."""
         pass
 
