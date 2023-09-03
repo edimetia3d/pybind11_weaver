@@ -2,23 +2,23 @@ from typing import List
 
 from clang import cindex
 
-from pybind11_weaver import entity_base
+from . import entity_base
 
 
-class ClassEntity(entity_base.EntityBase):
+class ClassEntity(entity_base.Entity):
 
     def __init__(self, cursor: cindex.Cursor):
-        entity_base.EntityBase.__init__(self, cursor)
+        entity_base.Entity.__init__(self, cursor)
         assert cursor.kind in [cindex.CursorKind.CLASS_DECL, cindex.CursorKind.STRUCT_DECL]
 
     def get_unique_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
 
-    def declare_expr(self, module_sym: str) -> str:
-        code = f'{self.pybind11_type_str()}({module_sym},"{self.get_spelling()}")'
+    def create_pybind11_obj_expr(self, module_sym: str) -> str:
+        code = f'{self.pybind11_type_str()}({module_sym},"{self.name}")'
         return code
 
-    def update_stmts(self, sym: str) -> List[str]:
+    def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
         return []
 
     def pybind11_type_str(self) -> str:

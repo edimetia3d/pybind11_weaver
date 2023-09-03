@@ -1,6 +1,5 @@
-import abc
-import functools
 from typing import Union
+import functools
 
 from clang import cindex
 
@@ -31,32 +30,3 @@ class ScopeList:
     @functools.lru_cache
     def str(self, seperator="::"):
         return seperator.join(self.scopes)
-
-
-class EntityBase(abc.ABC):
-
-    def __init__(self, cursor: cindex.Cursor):
-        self.cursor = cursor
-
-    def get_scope(self) -> ScopeList:
-        return ScopeList(self.cursor)
-
-    def get_spelling(self) -> str:
-        return self.cursor.spelling
-
-    @abc.abstractmethod
-    def get_unique_name(self) -> str:
-        """Unique name should be able to used as source code identifier."""
-        pass
-
-    @abc.abstractmethod
-    def declare_expr(self, module_sym: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def update_stmts(self, sym: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def pybind11_type_str(self) -> str:
-        pass
