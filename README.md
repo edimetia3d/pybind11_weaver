@@ -2,7 +2,7 @@
 
 **Pybind11 Weaver** is a powerful code generator designed to automate the generation of pybind11 code from C++ header files. It streamlines the process of creating Python bindings, enabling users to focus on writing critical pybind11 code and offloading the tedious work to Pybind11 Weaver.
 
-This tool takes a [sample.h](sample/enum/sample.h) file and transforms it into a [sample.cc.inc](sample/enum/sample.cc.inc) file using [cfg.yaml](sample/enum/cfg.yaml) as a guide. Following the binding with a single line `auto update_guard = DeclFn(m);` in [binding.cc](sample/enum/binding.cc), all elements from the header file become accessible in Python as demonstrated in this [example](test/sample_test/launch_module.py).
+This tool takes a [sample.h](sample/all_feature/sample.h) file and transforms it into a [sample_binding.cc.inc](sample/all_feature/sample_binding.cc.inc) file using [cfg.yaml](sample/all_feature/cfg.yaml) as a guide. Following the binding with a single line `auto update_guard = DeclFn(m);` in [binding.cc](sample/all_feature/binding.cc), all elements from the header file become accessible in Python as demonstrated in this [example](test/sample_test/launch_module.py).
 
 
 ## Key Features
