@@ -18,7 +18,7 @@ struct {entity_struct_name} {{
 {binding_stmts}
   }}
   HandleT handle;
-  [[maybe_unused]] const char * qualified_name = "{qualified_name}"; 
+
 }};
 """
 
@@ -65,8 +65,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
             entity_struct_name=entity_struct_name,
             parent_expr=parent_sym,
             init_handle_expr=entity.create_pybind11_obj_expr("std::forward<ParentT>(parent_h)"),
-            binding_stmts="\n".join(entity.update_stmts("handle")),
-            qualified_name=entity.qualified_name())
+            binding_stmts="\n".join(entity.update_stmts("handle")))
         entity_struct_decls.append(struct_decl)
 
         # generate decl

@@ -1,1 +1,1 @@
-add_subdirectory(cpp_header_test)
+add_subdirectory(sample_test)

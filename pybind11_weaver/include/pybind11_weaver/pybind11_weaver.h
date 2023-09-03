@@ -24,9 +24,7 @@ public:
     }
   }
 
-  ~CallUpdateGuard() {
-    this->operator()();
-  }
+  ~CallUpdateGuard() { this->operator()(); }
 
 private:
   Fn fn_;

@@ -1,79 +1,68 @@
-# Pybind11 Weaver
+# Pybind11 Weaver: Python Binding Code Generator
 
-Pybind11 Weaver is a code generator to generate pybind11 code from c++ header files.
-It will relieve you from creating a python binding. User could write all important (or necessary) pybind11 code,
-and let Pybind11 Weaver do the rest tedious work.
+**Pybind11 Weaver** is a powerful code generator designed to automate the generation of pybind11 code from C++ header files. It streamlines the process of creating Python bindings, enabling users to focus on writing critical pybind11 code and offloading the tedious work to Pybind11 Weaver.
 
-It could turn the [sample.h](sample/enum/sample.h) into [sample.cc.inc](sample/enum/sample.cc.inc)
-with [cfg.yaml](sample/enum/cfg.yaml). And after binding with a single line `auto update_guard = DeclFn(m);`
-in [binding.cc](sample/enum/binding.cc),
-all enum types in the header file will be available in the python module.
+This tool takes a [sample.h](sample/enum/sample.h) file and transforms it into a [sample.cc.inc](sample/enum/sample.cc.inc) file using [cfg.yaml](sample/enum/cfg.yaml) as a guide. Following the binding with a single line `auto update_guard = DeclFn(m);` in [binding.cc](sample/enum/binding.cc), all elements from the header file become accessible in Python as demonstrated in this [example](test/sample_test/launch_module.py).
 
-After building , the code below will give you the enum item of C++ `earth::creatures::Animal::DOG`.
 
-```python
-import enum_module
+## Key Features
 
-enum_module.earth.creatures.Animal.DOG
-```
+1. **Highly Customizable:** While the default configuration is super simple and suitable for most cases, it allows for high customization.
+2. **Ease of Use:** As a pure Python package, a simple `pip install` gets it ready to work.
+3. **Versatility:** It supports the merging of generated code with hand-written code, a practice we highly recommend.
+4. **Structure Preservation:** It retains the module structure of the original C++ code.
 
-This project features that:
+## Features & Roadmap
+- [x] Namespace hierarchy to Python submodules
+- [x] Enum
+- [ ] Enum doc
+- [x] Function, function overload
+- [ ] Function doc
+- [x] Class method, method overloading, static method, static method overloading, constructor, constructor overloading
+- [x] Class field
+- [x] Class access control
+- [ ] Trampoline class for virtual function
+- [ ] Class doc, method doc, field doc
+- [ ] Support working with hand-written code
+- [ ] Auto snake case
 
-1. Highly customizable, while the default configuration is super simple, and is good for most cases.
-2. Pure python package, just a `pip install` will make it ready to work.
-3. Support mixing generated code with hand-writing code, and it is recommended to do.
-4. Able to keep the module structure of the original c++ code.
+## Background & Recommendations
 
-## Background && Advice
+This project originated from an internal project aimed at creating a Python binding for a **LARGE** developing C++ library. This posed significant challenges:
 
-This project was born from another internal project. The internal project's target was to make a python binding for a
-**HUGE** developing c++ library.
+1. The C++ library interface contained a vast number of classes, functions, and enums. Creating bindings for all these elements was not only **tedious** but also **error-prone**.
+2. Because the C++ library was under active development, staying updated with daily additions and frequent code modifications was a **maintenance challenge**.
+3. Some aspects of the C++ library, due to historical reasons, were incompatible with Python conventions, necessitating **hand-written binding codes**.
+4. The sheer size of the library added to the complexity, making it difficult to develop a generator smart enough to handle everything, hence the need for manual binding code writing.
 
-Create python binding for a huge developing library brings some challenges:
+In light of these challenges, we designed Pybind11 Weaver as a tool to generate the majority of the binding code, leaving users to handcraft the remaining parts as needed. If this approach suits your needs, this tool will be a valuable asset.
 
-1. The C++ library interface has tons of classes, functions, enums, create binding for all of them are **tedious**, and
-   also
-   **error-prone**.
-2. The C++ library is developing, many new features are added every day, and existing code get frequent updates. It is
-   really hard to track these updates by hand, so it is **hard to maintain** the python binding.
-3. The C++ library does have some tricky parts that do not fit into the python convention, e.g., For some history
-   reason, the library has some structs that are implemented in C style, something like `Foo::Create` and `Foo::Destroy`
-   exist.
-   However, python-binding do not need to carry such a burden, we could just re-design the struct to fit the python
-   convention.
-   So, **some part of the binding must be written by hand**.
-4. **Huge** itself brings complexity. It is hard to make a generator smart enough to generate everything, so there must
-   be a time that generator does not fit your needs, we should be able to write binding code by hand then.
+**Recommended Usage:**
 
-For these reasons, We decided to create a tool. So we can write the binding code by hand, as much as we want, and let
-the tool generate the rest. If this kind of usage follows your need, this project will be very happy to help you.
-
-Recommended Usage:
-
-1. Write binding code as you need. If you don't know what you need, just write nothing, you can do it later when you
-   found some. Create a `cfg.yaml` file to describe what needs to be generated.
-2. Use the generator to generate `inc` files.
-3. Create a `binding.cc`, include all the `inc` file, call all the binding code.
-4. Compile all code into a binary, and you are done.
-5. Optionally, you can use the [pybind11-stubgen](https://github.com/sizmailov/pybind11-stubgen) to generate
-   `.pyi` stub files, it will make your binding more readable to both human and MYPY in a static way.
+1. Create a `cfg.yaml` file to describe what needs to be generated.
+2. Use the generator to create `inc` files.
+3. Create a `binding.cc`, include all the `inc` files, and call all the binding code.
+4. Compile all code into a binary to finish.
+5. Optionally, use [pybind11-stubgen](https://github.com/sizmailov/pybind11-stubgen) to generate `.pyi` stub files, enhancing readability for both humans and MYPY in a static way.
 
 ## Installation
 
-### PYPI
+### Via PYPI
 
-`python3 -m pip install pybind11-weaver`
+```bash
+python3 -m pip install pybind11-weaver
+```
 
 ### From Source
 
-* Install from source
+* To install from source:
 
 ```bash
 git clone https://github.com/edimetia3d/pybind11_weaver
 python3 -m pip install $(pwd)/pybind11_weaver/
 ```
 
-* Run from source (Editable/Develop Mode)
+* To run from source (Editable/Develop Mode):
 
 ```bash
 git clone https://github.com/edimetia3d/pybind11_weaver
