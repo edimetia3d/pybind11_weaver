@@ -1,3 +1,4 @@
+# may use`python3 -m pybind11 --cmakedir`
 if (NOT DEFINED pybind11_DIR)
     return()
 endif ()

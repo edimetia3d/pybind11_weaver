@@ -77,7 +77,5 @@ python3 -m pip install $(pwd)/pybind11_weaver/
 
 ```bash
 git clone https://github.com/edimetia3d/pybind11_weaver
-python3 -m pip install $(pwd)/pybind11_weaver/ && python3 -m pip uninstall pybind11_weaver # A hacky way to install dependencies
-export PYTHONPATH=$PYTHONPATH:$(pwd)/pybind11_weaver
-alias pybind11_weaver=$(pwd)/pybind11_weaver/pybind11_weaver/main.py
+python3 -m pip install -e $(pwd)/pybind11_weaver/ -v --config-settings editable_mode=compat
 ```
