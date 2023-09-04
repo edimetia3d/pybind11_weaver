@@ -9,17 +9,25 @@ from . import gen_unit
 entity_template = """
 struct {entity_struct_name} : public EntityBase {{
   using HandleT = {handle_type}; 
-  explicit {entity_struct_name}(ParentEntity && parent_h):handle{{ {init_handle_expr} }}{{
+  explicit {entity_struct_name}(EntityScope && parent_h):handle{{ {init_handle_expr} }}{{
   }}
 
   {entity_struct_name}({entity_struct_name} &&) = delete;
   {entity_struct_name}(const {entity_struct_name} &) = delete;
   
-  void Update() {{
+  void Update() override {{
     //Binding codes here
 {binding_stmts}
   }}
+  
+  EntityScope AsScope() override {{
+    return EntityScope(handle);
+  }}
+  
   HandleT handle;
+  static const char * Key(){{ 
+    return {unique_struct_key};
+  }}
 
 }};
 """
@@ -33,7 +41,7 @@ file_template = """
 
 namespace {{
 
-using pybind11_weaver::ParentEntity;
+using pybind11_weaver::EntityScope;
 using pybind11_weaver::EntityBase;
 
 
@@ -43,7 +51,7 @@ using pybind11_weaver::EntityBase;
 * Create all entities, return a callable guard that can be called to update all entities.
 * If the returned guard is not called, the guard will call the update function on its destruction.
 **/
-[[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m){{
+[[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::RegistryT & registry){{
 {create_entity_var_stmts}
 
     auto update_fn = [=](){{
@@ -72,18 +80,19 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
             entity_struct_name=entity_struct_name,
             parent_expr=parent_sym,
             init_handle_expr=entity.create_pybind11_obj_expr("parent_h"),
-            binding_stmts="\n".join(entity.update_stmts("handle")))
+            binding_stmts="\n".join(entity.update_stmts("handle")),
+            unique_struct_key=f"\"{entity.qualified_name()}\"")
         entity_struct_decls.append(struct_decl)
 
         # generate decl
         create_entity_var_stmts.append(
-            f"auto {entity_obj_sym} = std::make_shared<{entity_struct_name}>(ParentEntity({parent_sym}));")
+            f"auto {entity_obj_sym} = pybind11_weaver::CreateEntity<{entity_struct_name}>({parent_sym}, registry);")
 
         # generate updates
         update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")
 
         # recursive call to children
-        ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->handle", id + 1)
+        ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->AsScope()", id + 1)
         entity_struct_decls += ret[0]
         create_entity_var_stmts += ret[1]
         update_entity_var_stmts += ret[2]
@@ -105,7 +114,7 @@ def gen_code(config_file: str):
                 target_entities = target_entities[ns].children
         entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, _ = gen_binding_codes(
             entities=target_entities,
-            parent_sym="m", beg_id=0)
+            parent_sym="EntityScope(m)", beg_id=0)
 
         # load pybind11_weaver_header
         pybind11_weaver_header_path = os.path.dirname(
