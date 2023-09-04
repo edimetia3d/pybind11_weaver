@@ -1,5 +1,5 @@
 
-// GENERATED AT 09/04/2023, 16:58:54
+// GENERATED AT 09/04/2023, 19:15:44
 
 #include "sample.h"
 
@@ -88,6 +88,13 @@ struct CustomBindingRegistry {
     registry_.emplace(key, std::move(ctor));
   }
 
+  template <class BindingT> void SetCustom() {
+    auto key = std::string(BindingT::Key());
+    registry_.emplace(key, [](EntityScope &&parent_h) {
+      return std::make_shared<BindingT>(std::move(parent_h));
+    });
+  }
+
 private:
   RegistryT registry_;
 };
@@ -116,14 +123,14 @@ using pybind11_weaver::EntityBase;
 using pybind11_weaver::EntityScope;
 
 template <class Pybind11T> struct Bind_TopFunction : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_TopFunction(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
-    handle.def("TopFunction",
-               static_cast<void (*)(std::string &)>(&TopFunction));
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    pb11_obj.def("TopFunction",
+                 static_cast<void (*)(std::string &)>(&TopFunction));
   }
 
   static const char *Key() { return "TopFunction"; }
@@ -136,7 +143,7 @@ struct Entity_TopFunction
       : Bind_TopFunction<std::decay_t<pybind11::module_ &>>(parent_h),
         handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -144,12 +151,12 @@ struct Entity_TopFunction
 };
 
 template <class Pybind11T> struct Bind_TopFunctionDef : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_TopFunctionDef(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def("TopFunctionDef", static_cast<void (*)()>(&TopFunctionDef));
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("TopFunctionDef", static_cast<void (*)()>(&TopFunctionDef));
   }
 
   static const char *Key() { return "TopFunctionDef"; }
@@ -162,7 +169,7 @@ struct Entity_TopFunctionDef
       : Bind_TopFunctionDef<std::decay_t<pybind11::module_ &>>(parent_h),
         handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -170,12 +177,11 @@ struct Entity_TopFunctionDef
 };
 
 template <class Pybind11T> struct Bind_earth : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-  }
+  virtual void Bind(Pybind11T &pb11_obj) {}
 
   static const char *Key() { return "earth"; }
 };
@@ -188,7 +194,7 @@ struct Entity_earth : public Bind_earth<std::decay_t<pybind11::module_>> {
             static_cast<pybind11::module_ &>(parent_h).def_submodule("earth")} {
   }
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -196,12 +202,11 @@ struct Entity_earth : public Bind_earth<std::decay_t<pybind11::module_>> {
 };
 
 template <class Pybind11T> struct Bind_earth_creatures : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-  }
+  virtual void Bind(Pybind11T &pb11_obj) {}
 
   static const char *Key() { return "earth::creatures"; }
 };
@@ -214,7 +219,7 @@ struct Entity_earth_creatures
         handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
             "creatures")} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -223,13 +228,13 @@ struct Entity_earth_creatures
 
 template <class Pybind11T>
 struct Bind_earth_creatures_NSFunction : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_NSFunction(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def("NSFunction", static_cast<int (*)(const std::string &)>(
-                                 &earth::creatures::NSFunction));
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("NSFunction", static_cast<int (*)(const std::string &)>(
+                                   &earth::creatures::NSFunction));
   }
 
   static const char *Key() { return "earth::creatures::NSFunction"; }
@@ -244,7 +249,7 @@ struct Entity_earth_creatures_NSFunction
             parent_h),
         handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -253,13 +258,13 @@ struct Entity_earth_creatures_NSFunction
 
 template <class Pybind11T>
 struct Bind_earth_creatures_NSFunctionDef : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_NSFunctionDef(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def("NSFunctionDef",
-               static_cast<void (*)()>(&earth::creatures::NSFunctionDef));
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("NSFunctionDef",
+                 static_cast<void (*)()>(&earth::creatures::NSFunctionDef));
   }
 
   static const char *Key() { return "earth::creatures::NSFunctionDef"; }
@@ -274,7 +279,7 @@ struct Entity_earth_creatures_NSFunctionDef
             parent_h),
         handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -283,13 +288,13 @@ struct Entity_earth_creatures_NSFunctionDef
 
 template <class Pybind11T>
 struct Bind_earth_creatures_Animal : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_Animal(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.value("DOG", earth::creatures::Animal::DOG);
-    handle.value("CAT", earth::creatures::Animal::CAT);
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("DOG", earth::creatures::Animal::DOG);
+    pb11_obj.value("CAT", earth::creatures::Animal::CAT);
   }
 
   static const char *Key() { return "earth::creatures::Animal"; }
@@ -304,7 +309,7 @@ struct Entity_earth_creatures_Animal
             std::decay_t<pybind11::enum_<earth::creatures::Animal>>>(parent_h),
         handle{parent_h, "Animal", pybind11::arithmetic()} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -313,14 +318,14 @@ struct Entity_earth_creatures_Animal
 
 template <class Pybind11T>
 struct Bind_earth_creatures_ValueSet : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_ValueSet(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.value("LOW", earth::creatures::ValueSet::LOW);
-    handle.value("MIDDLE", earth::creatures::ValueSet::MIDDLE);
-    handle.value("HIGH", earth::creatures::ValueSet::HIGH);
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("LOW", earth::creatures::ValueSet::LOW);
+    pb11_obj.value("MIDDLE", earth::creatures::ValueSet::MIDDLE);
+    pb11_obj.value("HIGH", earth::creatures::ValueSet::HIGH);
   }
 
   static const char *Key() { return "earth::creatures::ValueSet"; }
@@ -336,7 +341,7 @@ struct Entity_earth_creatures_ValueSet
             parent_h),
         handle{parent_h, "ValueSet", pybind11::arithmetic()} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -345,16 +350,21 @@ struct Entity_earth_creatures_ValueSet
 
 template <class Pybind11T>
 struct Bind_earth_creatures_Home : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_Home(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def(pybind11::init<>());
-    handle.def(
-        "Method",
-        static_cast<double (earth::creatures::Home::*)(std::string &, int)>(
-            &earth::creatures::Home::Method));
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(pybind11::init<>());
+    Pybind11WeaverBindAllMethods(pb11_obj);
+  }
+
+  void Pybind11WeaverBindAllMethods(Pybind11T &obj) { BindMethod_Method(obj); }
+
+  virtual void BindMethod_Method(Pybind11T &obj) {
+    obj.def("Method",
+            static_cast<double (earth::creatures::Home::*)(std::string &, int)>(
+                &earth::creatures::Home::Method));
   }
 
   static const char *Key() { return "earth::creatures::Home"; }
@@ -369,7 +379,7 @@ struct Entity_earth_creatures_Home
             std::decay_t<pybind11::class_<earth::creatures::Home>>>(parent_h),
         handle{parent_h, "Home"} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -378,13 +388,13 @@ struct Entity_earth_creatures_Home
 
 template <class Pybind11T>
 struct Bind_earth_creatures_Home_Food : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_Home_Food(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.value("MEAT", earth::creatures::Home::Food::MEAT);
-    handle.value("RICE", earth::creatures::Home::Food::RICE);
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("MEAT", earth::creatures::Home::Food::MEAT);
+    pb11_obj.value("RICE", earth::creatures::Home::Food::RICE);
   }
 
   static const char *Key() { return "earth::creatures::Home::Food"; }
@@ -400,7 +410,7 @@ struct Entity_earth_creatures_Home_Food
             parent_h),
         handle{parent_h, "Food", pybind11::arithmetic()} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -409,34 +419,47 @@ struct Entity_earth_creatures_Home_Food
 
 template <class Pybind11T>
 struct Bind_earth_creatures_SweetHome : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_earth_creatures_SweetHome(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def(
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
         pybind11::init<int, float, const std::string &, std::string *>());
-    handle.def("Method",
-               static_cast<void (earth::creatures::SweetHome::*)(int)>(
-                   &earth::creatures::SweetHome::Method));
-    handle.def(
-        "Method",
-        static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
-            &earth::creatures::SweetHome::Method));
-    handle.def("VirtualMethod",
-               static_cast<void (earth::creatures::SweetHome::*)(int)>(
-                   &earth::creatures::SweetHome::VirtualMethod));
-    handle.def(
-        "VirtualMethod",
-        static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
-            &earth::creatures::SweetHome::VirtualMethod));
-    handle.def_static(
+    Pybind11WeaverBindAllMethods(pb11_obj);
+    pb11_obj.def_readwrite("member", &earth::creatures::SweetHome::member);
+  }
+
+  void Pybind11WeaverBindAllMethods(Pybind11T &obj) {
+    BindMethod_Method(obj);
+    BindMethod_VirtualMethod(obj);
+    BindMethod_StaticMethod(obj);
+  }
+
+  virtual void BindMethod_Method(Pybind11T &obj) {
+    obj.def("Method", static_cast<int (earth::creatures::SweetHome::*)(int)>(
+                          &earth::creatures::SweetHome::Method));
+    obj.def("Method",
+            static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
+                &earth::creatures::SweetHome::Method));
+  }
+
+  virtual void BindMethod_VirtualMethod(Pybind11T &obj) {
+    obj.def("VirtualMethod",
+            static_cast<void (earth::creatures::SweetHome::*)(int)>(
+                &earth::creatures::SweetHome::VirtualMethod));
+    obj.def("VirtualMethod",
+            static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
+                &earth::creatures::SweetHome::VirtualMethod));
+  }
+
+  virtual void BindMethod_StaticMethod(Pybind11T &obj) {
+    obj.def_static(
         "StaticMethod",
         static_cast<void (*)(int)>(&earth::creatures::SweetHome::StaticMethod));
-    handle.def_static("StaticMethod",
-                      static_cast<void (*)(std::string &)>(
-                          &earth::creatures::SweetHome::StaticMethod));
-    handle.def_readwrite("member", &earth::creatures::SweetHome::member);
+    obj.def_static("StaticMethod",
+                   static_cast<void (*)(std::string &)>(
+                       &earth::creatures::SweetHome::StaticMethod));
   }
 
   static const char *Key() { return "earth::creatures::SweetHome"; }
@@ -452,7 +475,7 @@ struct Entity_earth_creatures_SweetHome
             parent_h),
         handle{parent_h, "SweetHome"} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -460,12 +483,11 @@ struct Entity_earth_creatures_SweetHome
 };
 
 template <class Pybind11T> struct Bind_disabled_space : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_disabled_space(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-  }
+  virtual void Bind(Pybind11T &pb11_obj) {}
 
   static const char *Key() { return "disabled_space"; }
 };
@@ -478,7 +500,7 @@ struct Entity_disabled_space
         handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
             "disabled_space")} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -486,13 +508,13 @@ struct Entity_disabled_space
 };
 
 template <class Pybind11T> struct Bind_disabled_space_Foo : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_disabled_space_Foo(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.value("BAR", disabled_space::Foo::BAR);
-    handle.value("BAZ", disabled_space::Foo::BAZ);
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("BAR", disabled_space::Foo::BAR);
+    pb11_obj.value("BAZ", disabled_space::Foo::BAZ);
   }
 
   static const char *Key() { return "disabled_space::Foo"; }
@@ -507,7 +529,7 @@ struct Entity_disabled_space_Foo
             std::decay_t<pybind11::enum_<disabled_space::Foo>>>(parent_h),
         handle{parent_h, "Foo", pybind11::arithmetic()} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -515,12 +537,11 @@ struct Entity_disabled_space_Foo
 };
 
 template <class Pybind11T> struct Bind_disabled_member : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_disabled_member(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-  }
+  virtual void Bind(Pybind11T &pb11_obj) {}
 
   static const char *Key() { return "disabled_member"; }
 };
@@ -533,7 +554,7 @@ struct Entity_disabled_member
         handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
             "disabled_member")} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
@@ -542,13 +563,13 @@ struct Entity_disabled_member
 
 template <class Pybind11T>
 struct Bind_disabled_member_disabled_Foo : public EntityBase {
+  using Pybind11Type = Pybind11T;
 
   explicit Bind_disabled_member_disabled_Foo(EntityScope parent_h) {}
 
-  virtual void Bind(void *handle_) {
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.value("BAR", disabled_member::disabled_Foo::BAR);
-    handle.value("BAZ", disabled_member::disabled_Foo::BAZ);
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("BAR", disabled_member::disabled_Foo::BAR);
+    pb11_obj.value("BAZ", disabled_member::disabled_Foo::BAZ);
   }
 
   static const char *Key() { return "disabled_member::disabled_Foo"; }
@@ -564,7 +585,7 @@ struct Entity_disabled_member_disabled_Foo
             parent_h),
         handle{parent_h, "disabled_Foo", pybind11::arithmetic()} {}
 
-  void Update() override { Bind(&handle); }
+  void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 

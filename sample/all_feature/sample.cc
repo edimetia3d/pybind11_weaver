@@ -6,7 +6,7 @@
 void TopFunction(int) {}
 void TopFunction(std::string &) {}
 double earth::creatures::Home::Method(std::string &, int) { return 0; }
-void earth::creatures::SweetHome::Method(int) {}
+int earth::creatures::SweetHome::Method(int i) { return i; }
 void earth::creatures::SweetHome::Method(std::string &) {}
 void earth::creatures::SweetHome::StaticMethod(int) {}
 void earth::creatures::SweetHome::StaticMethod(std::string &) {}

@@ -23,7 +23,7 @@ This tool takes a [sample.h](sample/all_feature/sample.h) file and transforms it
 - [x] Class access control
 - [ ] Trampoline class for virtual function
 - [ ] Class doc, method doc, field doc
-- [ ] Support working with hand-written code
+- [x] Support working with hand-written code
 - [ ] Auto snake case
 
 ## Background & Recommendations
@@ -68,3 +68,17 @@ python3 -m pip install $(pwd)/pybind11_weaver/
 git clone https://github.com/edimetia3d/pybind11_weaver
 python3 -m pip install -e $(pwd)/pybind11_weaver/ -v --config-settings editable_mode=compat
 ```
+## How it works
+
+The Pybind11 Weaver operates under the hood by utilizing [libclang](https://clang.llvm.org/), a library that parses C++ header files. This enables us to obtain all APIs from the header file, which are then used to generate the binding code on your behalf.
+
+Notably, only header files are required, as we need declarations, not definitions. However, to ensure accurate parsing of the code, some compiler flags, especially for macros, are necessary.
+
+The code generated is structured into a `struct`:
+1. During the construction of the struct, it creates some Pybind11 objects, such as `pybind11::class_` or `pybind11::enum_`.
+2. When the `Update()` API is invoked, the Pybind11 object experiences an update.
+
+The use of a struct permits us to:
+* Separate the processes of object creation and updates, ensuring that Pybind11 consistently acknowledges all exported classes, which aids in the generation of accurate documentation.
+* Increase the readability of the generated code, making it simpler to debug.
+* Simplify customization, as you can easily inherit the struct and override or reimplement necessary elements.

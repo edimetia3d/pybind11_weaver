@@ -9,11 +9,11 @@ from . import gen_unit
 entity_template = """
 
 template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
+  using Pybind11Type = Pybind11T;
 
   explicit {bind_struct_name}(EntityScope parent_h){{}}
 
-  virtual void Bind(void *handle_) {{
-    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+  virtual void Bind(Pybind11T &pb11_obj) {{
     {binding_stmts} 
   }}
   
@@ -35,7 +35,7 @@ struct {entity_struct_name} : public {bind_struct_name}<std::decay_t<{handle_typ
   }}
   
   void Update() override {{
-    Bind(&handle);
+    Bind(handle);
   }}
   
   EntityScope AsScope() override {{
@@ -97,7 +97,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
             bind_struct_name=bind_struct_name,
             parent_expr=parent_sym,
             init_handle_expr=entity.init_default_pybind11_value("parent_h"),
-            binding_stmts="\n".join(entity.update_stmts("handle")),
+            binding_stmts="\n".join(entity.update_stmts("pb11_obj")),
             unique_struct_key=f"\"{entity.qualified_name()}\"",
             extra_code=entity.extra_code())
         entity_struct_decls.append(struct_decl)

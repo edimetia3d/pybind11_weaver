@@ -31,7 +31,7 @@ struct Home {
 class SweetHome {
 public:
   SweetHome(int, float, const std::string &, std::string *){};
-  void Method(int);
+  int Method(int);
   void Method(std::string &);
   virtual void VirtualMethod(int) {}
   virtual void VirtualMethod(std::string &) {}
