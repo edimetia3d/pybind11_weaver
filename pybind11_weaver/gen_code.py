@@ -1,4 +1,7 @@
+import os.path
 from typing import Dict, List
+import shutil
+
 from .entity import entity_base
 from . import entity_tree
 from . import gen_unit
@@ -26,31 +29,13 @@ file_template = """
 
 {include_directives}
 
-#include <pybind11_weaver/pybind11_weaver.h>
+{pybind11_weaver_header}
 
 namespace {{
 
-struct EntityBase{{
-  virtual ~EntityBase() = default;
-}};
+using pybind11_weaver::ParentEntity;
+using pybind11_weaver::EntityBase;
 
-struct ParentEntity {{
-  explicit ParentEntity(pybind11::module_ &parent_h) : module_{{&parent_h}} {{}}
-  explicit ParentEntity(pybind11::detail::generic_type &parent_h) : type_{{&parent_h}} {{}}
-  explicit operator pybind11::module_ &() {{ return *module_; }}
-  explicit operator pybind11::detail::generic_type &() {{ return *type_; }}
-  operator pybind11::handle &() {{
-    if (module_) {{
-      return *module_;
-    }} else {{
-      return *type_;
-    }}
-  }}
-
-private:
-  pybind11::detail::generic_type *type_ = nullptr;
-  pybind11::module_ *module_ = nullptr;
-}};
 
 {entity_struct_decls}
 
@@ -110,6 +95,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
 def gen_code(config_file: str):
     gus = gen_unit.load_gen_unit_from_config(config_file)
     for gu in gus:
+        # load entities
         entity_root = entity_tree.EntityTree()
         entity_root.load_from_gu(gu)
         target_entities = entity_root.entities
@@ -120,9 +106,18 @@ def gen_code(config_file: str):
         entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, _ = gen_binding_codes(
             entities=target_entities,
             parent_sym="m", beg_id=0)
+
+        # load pybind11_weaver_header
+        pybind11_weaver_header_path = os.path.dirname(
+            os.path.abspath(__file__)) + "/include/pybind11_weaver/pybind11_weaver.h"
+        with open(pybind11_weaver_header_path, "r") as f:
+            pybind11_weaver_header = f.read()
+
+        # gen file
         file_content = file_template.format(
             date=gu.creation_time,
             include_directives="\n".join(gu.src_file_includes()),
+            pybind11_weaver_header=pybind11_weaver_header,
             decl_fn_name=gu.options.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
@@ -130,3 +125,7 @@ def gen_code(config_file: str):
         )
         with open(gu.options.output, "w") as f:
             f.write(file_content)
+
+        # format file if clang-format found
+        if shutil.which("clang-format") is not None:
+            os.system(f"clang-format -i {gu.options.output} --style=LLVM")
