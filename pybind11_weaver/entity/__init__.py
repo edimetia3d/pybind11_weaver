@@ -22,9 +22,9 @@ def create_entity(cursor: cindex.Cursor):
 
     if kind == _KIND.ENUM_DECL:
         return enum.EnumEntity(cursor)
-    if kind == cursor.kind == _KIND.NAMESPACE:
+    if kind == _KIND.NAMESPACE:
         return namespace.NamespaceEntity(cursor)
-    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL]:
+    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL] and cursor.is_definition():
         return klass.ClassEntity(cursor)
     if kind == _KIND.FUNCTION_DECL:
         return funktion.FunctionEntity(cursor)

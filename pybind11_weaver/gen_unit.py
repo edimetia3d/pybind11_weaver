@@ -107,11 +107,25 @@ def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "")
 class GenUnit:
     Options = collections.namedtuple("Options", ("output", "decl_fn_name", "root_module_namespace"))
 
-    def __init__(self, tu, src_files: List[str], options: Options):
+    def __init__(self, tu, src_files: List[str], options: Options, visibility_hidden: bool):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         self.tu: cindex.TranslationUnit = tu
         self.src_files: List[str] = src_files
         self.options: GenUnit.Options = options
+        self.fvisibility_hidden = visibility_hidden
+
+    def is_visible(self, cursor: cindex.Cursor):
+        """Utility method to check if a cursor is visible in the current translation unit."""
+        if cursor.kind in [cindex.CursorKind.ENUM_DECL, cindex.CursorKind.NAMESPACE]:
+            return True
+        visible = not self.fvisibility_hidden
+        for c in cursor.get_children():
+            if c.kind == cindex.CursorKind.VISIBILITY_ATTR:
+                if c.spelling == "default":
+                    visible = True
+                elif c.spelling == "hidden":
+                    visible = False
+        return visible
 
     def src_file_tail_names(self):
         files = []
@@ -133,11 +147,13 @@ def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
     common_flags = common_flags + ["-I" + path for path in cfg["common_config"]["include_directories"]]
     ret = []
     for entry in cfg["io_configs"]:
-        src_tu, _ = load_tu(entry["inputs"], common_flags + entry["extra_cxx_flags"])
+        cxx_flags = common_flags + entry["extra_cxx_flags"]
+        src_tu, _ = load_tu(entry["inputs"], cxx_flags)
         assert src_tu is not None
         ret.append(
             GenUnit(src_tu, entry["inputs"],
                     GenUnit.Options(output=entry["output"],
                                     decl_fn_name=entry["decl_fn_name"],
-                                    root_module_namespace=entry["root_module_namespace"])))
+                                    root_module_namespace=entry["root_module_namespace"]),
+                    visibility_hidden=("-fvisibility=hidden" in " ".join(cxx_flags))))
     return ret

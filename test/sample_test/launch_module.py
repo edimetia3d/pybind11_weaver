@@ -42,3 +42,7 @@ assert not hasattr(all_feature_module.disabled_member, "disabled_Foo")
 assert hasattr(sweet_home, "new_method")
 assert sweet_home.new_method() == 1
 assert sweet_home.Method(2) == 3
+
+assert not hasattr(sweet_home, "HiddenMethod")
+assert not hasattr(all_feature_module, "Foo")
+assert not hasattr(all_feature_module, "HiddenTopFunction")

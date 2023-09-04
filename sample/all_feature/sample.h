@@ -35,6 +35,7 @@ public:
   void Method(std::string &);
   virtual void VirtualMethod(int) {}
   virtual void VirtualMethod(std::string &) {}
+  __attribute__((visibility("hidden"))) void HiddenMethod(int);
   static void StaticMethod(int);
   static void StaticMethod(std::string &);
   int member;
@@ -60,5 +61,9 @@ enum class disabled_Foo {
   BAZ,
 };
 }
+
+class Foo; // forward declaration will be ignored
+__attribute__((visibility("hidden"))) void
+HiddenTopFunction(int); // visibility will be used
 
 #endif // PYBIND11_WEAVER_SAMPLE_H

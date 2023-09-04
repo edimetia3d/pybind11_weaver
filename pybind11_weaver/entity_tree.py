@@ -5,7 +5,7 @@ from clang import cindex
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
 from pybind11_weaver.entity import entity_base
-from pybind11_weaver.entity import funktion
+from pybind11_weaver.entity import funktion, klass
 
 
 class _DummyNode(entity_base.Entity):
@@ -65,9 +65,13 @@ class EntityTree:
         for cursor in root_cursor.walk_preorder():
             if not self.check_valid_cursor(cursor, valid_file_tail_names):
                 continue
+            if not gu.is_visible(cursor):
+                continue
             new_entity = create_entity(cursor)
             if new_entity is not None:
                 self.nest_update_parent(new_entity)
+                if isinstance(new_entity, klass.ClassEntity):
+                    new_entity.is_visible_fn = gu.is_visible
 
     def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str]):
         file = cursor.location.file

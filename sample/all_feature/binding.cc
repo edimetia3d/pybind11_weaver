@@ -14,6 +14,7 @@
 // In this example, we will use option b to
 // 1. add a new method to the python class
 // 2. change the binding of a method
+namespace {
 class CustomSweetHome : public Entity_earth_creatures_SweetHome {
 public:
   using Entity_earth_creatures_SweetHome::Entity_earth_creatures_SweetHome;
@@ -36,7 +37,7 @@ public:
                 &earth::creatures::SweetHome::Method));
   }
 };
-
+} // namespace
 PYBIND11_MODULE(all_feature_module, m) {
   pybind11_weaver::CustomBindingRegistry reg;
   reg.DisableBinding<Entity_disabled_space>();
