@@ -47,4 +47,18 @@ private:
 };
 } // namespace earth::creatures
 
+namespace disabled_space {
+enum Foo {
+  BAR,
+  BAZ,
+};
+}
+
+namespace disabled_member {
+enum class disabled_Foo {
+  BAR,
+  BAZ,
+};
+}
+
 #endif // PYBIND11_WEAVER_SAMPLE_H

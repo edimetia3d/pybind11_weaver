@@ -14,9 +14,7 @@ template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
 
   virtual void Bind(void *handle_) {{
     auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
-    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
-    handle.def("TopFunction",
-               static_cast<void (*)(std::string &)>(&TopFunction));
+    {binding_stmts} 
   }}
   
   {extra_code}
@@ -68,7 +66,7 @@ using pybind11_weaver::EntityBase;
 * Create all entities, return a callable guard that can be called to update all entities.
 * If the returned guard is not called, the guard will call the update function on its destruction.
 **/
-[[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::RegistryT & registry){{
+[[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::CustomBindingRegistry & registry){{
 {create_entity_var_stmts}
 
     auto update_fn = [=](){{

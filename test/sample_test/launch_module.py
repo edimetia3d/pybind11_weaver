@@ -34,3 +34,7 @@ sweet_home.member = 996
 assert sweet_home.member == 996
 assert not hasattr(sweet_home, "PrivateMethod")
 assert not hasattr(sweet_home, "private_member")
+
+assert not hasattr(all_feature_module, "disabled_space")  # disabled by pybind11_weaver
+assert hasattr(all_feature_module, "disabled_member")
+assert not hasattr(all_feature_module.disabled_member, "disabled_Foo")

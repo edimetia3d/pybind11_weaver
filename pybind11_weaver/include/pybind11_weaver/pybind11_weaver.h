@@ -31,6 +31,7 @@ private:
 };
 
 struct EntityScope {
+  explicit EntityScope(int64_t, int64_t) {} // a tag for disabled scope
   explicit EntityScope(pybind11::module_ &parent_h) : module_{&parent_h} {}
   explicit EntityScope(pybind11::detail::generic_type &parent_h)
       : type_{&parent_h} {}
@@ -43,6 +44,7 @@ struct EntityScope {
       return *type_;
     }
   }
+  bool IsDisabled() const { return module_ == nullptr && type_ == nullptr; }
 
 private:
   pybind11::detail::generic_type *type_ = nullptr;
@@ -57,15 +59,42 @@ struct EntityBase {
   virtual EntityScope AsScope() = 0;
 };
 
-using RegistryT =
-    std::map<std::string,
-             std::function<std::shared_ptr<EntityBase>(EntityScope &&)>>;
+struct DisabledEntity : public EntityBase {
+  void Update() override {}
+  EntityScope AsScope() override { return EntityScope{0, 0}; }
+};
+
+struct CustomBindingRegistry {
+  using CTorT = std::function<std::shared_ptr<EntityBase>(EntityScope &&)>;
+  using RegistryT = std::map<std::string, CTorT>;
+
+  bool contains(const std::string &key) const {
+    return registry_.count(key) > 0;
+  }
+  CTorT at(const std::string &key) const { return registry_.at(key); }
+
+  template <class BindingT> void DisableBinding() {
+    auto key = std::string(BindingT::Key());
+    registry_.emplace(
+        key, [](EntityScope &&) { return std::make_shared<DisabledEntity>(); });
+  }
+
+  void RegCustomBinding(const std::string &key, CTorT &&ctor) {
+    registry_.emplace(key, std::move(ctor));
+  }
+
+private:
+  RegistryT registry_;
+};
 
 template <class EntityT>
-std::shared_ptr<EntityBase> CreateEntity(EntityScope &&parent_h,
-                                         const RegistryT &registry) {
+std::shared_ptr<EntityBase>
+CreateEntity(EntityScope &&parent_h, const CustomBindingRegistry &registry) {
+  if (parent_h.IsDisabled()) {
+    return std::make_shared<DisabledEntity>();
+  }
   auto key = std::string(EntityT::Key());
-  if (registry.count(key) == 0) {
+  if (!registry.contains(key)) {
     return std::make_shared<EntityT>(std::move(parent_h));
   } else {
     auto fn = registry.at(key);
