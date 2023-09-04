@@ -7,28 +7,45 @@ from . import entity_tree
 from . import gen_unit
 
 entity_template = """
-struct {entity_struct_name} : public EntityBase {{
-  using HandleT = {handle_type}; 
-  explicit {entity_struct_name}(EntityScope && parent_h):handle{{ {init_handle_expr} }}{{
-  }}
 
-  {entity_struct_name}({entity_struct_name} &&) = delete;
-  {entity_struct_name}(const {entity_struct_name} &) = delete;
+template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
+
+  explicit {bind_struct_name}(EntityScope parent_h){{}}
+
+  virtual void Bind(void *handle_) {{
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }}
+  
+  {extra_code}
+  
+  static const char * Key(){{ 
+    return {unique_struct_key};
+  }}
+    
+}};
+
+
+struct {entity_struct_name} : public {bind_struct_name}<std::decay_t<{handle_type}>> {{
+
+  explicit {entity_struct_name}(EntityScope parent_h):
+  {bind_struct_name}<std::decay_t<{handle_type}>>(parent_h),
+  handle{{ {init_handle_expr} }}
+  {{
+  }}
   
   void Update() override {{
-    //Binding codes here
-{binding_stmts}
+    Bind(&handle);
   }}
   
   EntityScope AsScope() override {{
     return EntityScope(handle);
   }}
   
-  HandleT handle;
-  static const char * Key(){{ 
-    return {unique_struct_key};
-  }}
-
+  {handle_type} handle;
+    
 }};
 """
 
@@ -74,14 +91,17 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
         assert entity is not None
         entity_obj_sym = f"v{id}"
         entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
+        bind_struct_name = "Bind_" + entity.get_cpp_struct_name()
         # generate body
         struct_decl = entity_template.format(
-            handle_type=entity.pybind11_type_str(),
+            handle_type=entity.default_pybind11_type_str(),
             entity_struct_name=entity_struct_name,
+            bind_struct_name=bind_struct_name,
             parent_expr=parent_sym,
-            init_handle_expr=entity.create_pybind11_obj_expr("parent_h"),
+            init_handle_expr=entity.init_default_pybind11_value("parent_h"),
             binding_stmts="\n".join(entity.update_stmts("handle")),
-            unique_struct_key=f"\"{entity.qualified_name()}\"")
+            unique_struct_key=f"\"{entity.qualified_name()}\"",
+            extra_code=entity.extra_code())
         entity_struct_decls.append(struct_decl)
 
         # generate decl

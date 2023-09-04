@@ -19,8 +19,8 @@ class ClassEntity(entity_base.Entity):
     def get_cpp_struct_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
 
-    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
-        code = f'{self.pybind11_type_str()}({parent_scope_sym},"{self.name}")'
+    def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
+        code = f'{parent_scope_sym},"{self.name}"'
         return code
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
@@ -71,6 +71,6 @@ class ClassEntity(entity_base.Entity):
 
         return codes
 
-    def pybind11_type_str(self) -> str:
+    def default_pybind11_type_str(self) -> str:
         type_full_name = self.cursor.type.spelling
         return f"pybind11::class_<{type_full_name}>"

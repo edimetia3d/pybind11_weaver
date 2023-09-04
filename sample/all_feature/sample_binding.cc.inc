@@ -1,5 +1,5 @@
 
-// GENERATED AT 09/04/2023, 14:06:34
+// GENERATED AT 09/04/2023, 16:20:00
 
 #include "sample.h"
 
@@ -86,260 +86,338 @@ namespace {
 using pybind11_weaver::EntityBase;
 using pybind11_weaver::EntityScope;
 
-struct Entity_TopFunction : public EntityBase {
-  using HandleT = pybind11::module_ &;
-  explicit Entity_TopFunction(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
+template <class Pybind11T> struct Bind_TopFunction : public EntityBase {
 
-  Entity_TopFunction(Entity_TopFunction &&) = delete;
-  Entity_TopFunction(const Entity_TopFunction &) = delete;
+  explicit Bind_TopFunction(EntityScope parent_h) {}
 
-  void Update() override {
-    // Binding codes here
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
     handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
     handle.def("TopFunction",
                static_cast<void (*)(std::string &)>(&TopFunction));
   }
 
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  HandleT handle;
   static const char *Key() { return "TopFunction"; }
 };
 
-struct Entity_TopFunctionDef : public EntityBase {
-  using HandleT = pybind11::module_ &;
-  explicit Entity_TopFunctionDef(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
+struct Entity_TopFunction
+    : public Bind_TopFunction<std::decay_t<pybind11::module_ &>> {
 
-  Entity_TopFunctionDef(Entity_TopFunctionDef &&) = delete;
-  Entity_TopFunctionDef(const Entity_TopFunctionDef &) = delete;
+  explicit Entity_TopFunction(EntityScope parent_h)
+      : Bind_TopFunction<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.def("TopFunctionDef", static_cast<void (*)()>(&TopFunctionDef));
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ &handle;
+};
+
+template <class Pybind11T> struct Bind_TopFunctionDef : public EntityBase {
+
+  explicit Bind_TopFunctionDef(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "TopFunctionDef"; }
 };
 
-struct Entity_earth : public EntityBase {
-  using HandleT = pybind11::module_;
-  explicit Entity_earth(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
-            "earth")} {}
+struct Entity_TopFunctionDef
+    : public Bind_TopFunctionDef<std::decay_t<pybind11::module_ &>> {
 
-  Entity_earth(Entity_earth &&) = delete;
-  Entity_earth(const Entity_earth &) = delete;
+  explicit Entity_TopFunctionDef(EntityScope parent_h)
+      : Bind_TopFunctionDef<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override {
-    // Binding codes here
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ &handle;
+};
+
+template <class Pybind11T> struct Bind_earth : public EntityBase {
+
+  explicit Bind_earth(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth"; }
 };
 
-struct Entity_earth_creatures : public EntityBase {
-  using HandleT = pybind11::module_;
-  explicit Entity_earth_creatures(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
-            "creatures")} {}
+struct Entity_earth : public Bind_earth<std::decay_t<pybind11::module_>> {
 
-  Entity_earth_creatures(Entity_earth_creatures &&) = delete;
-  Entity_earth_creatures(const Entity_earth_creatures &) = delete;
-
-  void Update() override {
-    // Binding codes here
+  explicit Entity_earth(EntityScope parent_h)
+      : Bind_earth<std::decay_t<pybind11::module_>>(parent_h),
+        handle{
+            static_cast<pybind11::module_ &>(parent_h).def_submodule("earth")} {
   }
+
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ handle;
+};
+
+template <class Pybind11T> struct Bind_earth_creatures : public EntityBase {
+
+  explicit Bind_earth_creatures(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures"; }
 };
 
-struct Entity_earth_creatures_NSFunction : public EntityBase {
-  using HandleT = pybind11::module_ &;
-  explicit Entity_earth_creatures_NSFunction(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
+struct Entity_earth_creatures
+    : public Bind_earth_creatures<std::decay_t<pybind11::module_>> {
 
-  Entity_earth_creatures_NSFunction(Entity_earth_creatures_NSFunction &&) =
-      delete;
-  Entity_earth_creatures_NSFunction(const Entity_earth_creatures_NSFunction &) =
-      delete;
+  explicit Entity_earth_creatures(EntityScope parent_h)
+      : Bind_earth_creatures<std::decay_t<pybind11::module_>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "creatures")} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.def("NSFunction", static_cast<int (*)(const std::string &)>(
-                                 &earth::creatures::NSFunction));
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_NSFunction : public EntityBase {
+
+  explicit Bind_earth_creatures_NSFunction(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::NSFunction"; }
 };
 
-struct Entity_earth_creatures_NSFunctionDef : public EntityBase {
-  using HandleT = pybind11::module_ &;
-  explicit Entity_earth_creatures_NSFunctionDef(EntityScope &&parent_h)
-      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
+struct Entity_earth_creatures_NSFunction
+    : public Bind_earth_creatures_NSFunction<
+          std::decay_t<pybind11::module_ &>> {
 
-  Entity_earth_creatures_NSFunctionDef(
-      Entity_earth_creatures_NSFunctionDef &&) = delete;
-  Entity_earth_creatures_NSFunctionDef(
-      const Entity_earth_creatures_NSFunctionDef &) = delete;
+  explicit Entity_earth_creatures_NSFunction(EntityScope parent_h)
+      : Bind_earth_creatures_NSFunction<std::decay_t<pybind11::module_ &>>(
+            parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.def("NSFunctionDef",
-               static_cast<void (*)()>(&earth::creatures::NSFunctionDef));
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ &handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_NSFunctionDef : public EntityBase {
+
+  explicit Bind_earth_creatures_NSFunctionDef(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::NSFunctionDef"; }
 };
 
-struct Entity_earth_creatures_Animal : public EntityBase {
-  using HandleT = pybind11::enum_<earth::creatures::Animal>;
-  explicit Entity_earth_creatures_Animal(EntityScope &&parent_h)
-      : handle{pybind11::enum_<earth::creatures::Animal>(
-            parent_h, "Animal", pybind11::arithmetic())} {}
+struct Entity_earth_creatures_NSFunctionDef
+    : public Bind_earth_creatures_NSFunctionDef<
+          std::decay_t<pybind11::module_ &>> {
 
-  Entity_earth_creatures_Animal(Entity_earth_creatures_Animal &&) = delete;
-  Entity_earth_creatures_Animal(const Entity_earth_creatures_Animal &) = delete;
+  explicit Entity_earth_creatures_NSFunctionDef(EntityScope parent_h)
+      : Bind_earth_creatures_NSFunctionDef<std::decay_t<pybind11::module_ &>>(
+            parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.value("DOG", earth::creatures::Animal::DOG);
-    handle.value("CAT", earth::creatures::Animal::CAT);
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::module_ &handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_Animal : public EntityBase {
+
+  explicit Bind_earth_creatures_Animal(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::Animal"; }
 };
 
-struct Entity_earth_creatures_ValueSet : public EntityBase {
-  using HandleT = pybind11::enum_<earth::creatures::ValueSet>;
-  explicit Entity_earth_creatures_ValueSet(EntityScope &&parent_h)
-      : handle{pybind11::enum_<earth::creatures::ValueSet>(
-            parent_h, "ValueSet", pybind11::arithmetic())} {}
+struct Entity_earth_creatures_Animal
+    : public Bind_earth_creatures_Animal<
+          std::decay_t<pybind11::enum_<earth::creatures::Animal>>> {
 
-  Entity_earth_creatures_ValueSet(Entity_earth_creatures_ValueSet &&) = delete;
-  Entity_earth_creatures_ValueSet(const Entity_earth_creatures_ValueSet &) =
-      delete;
+  explicit Entity_earth_creatures_Animal(EntityScope parent_h)
+      : Bind_earth_creatures_Animal<
+            std::decay_t<pybind11::enum_<earth::creatures::Animal>>>(parent_h),
+        handle{parent_h, "Animal", pybind11::arithmetic()} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.value("LOW", earth::creatures::ValueSet::LOW);
-    handle.value("MIDDLE", earth::creatures::ValueSet::MIDDLE);
-    handle.value("HIGH", earth::creatures::ValueSet::HIGH);
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::enum_<earth::creatures::Animal> handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_ValueSet : public EntityBase {
+
+  explicit Bind_earth_creatures_ValueSet(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::ValueSet"; }
 };
 
-struct Entity_earth_creatures_Home : public EntityBase {
-  using HandleT = pybind11::class_<earth::creatures::Home>;
-  explicit Entity_earth_creatures_Home(EntityScope &&parent_h)
-      : handle{pybind11::class_<earth::creatures::Home>(parent_h, "Home")} {}
+struct Entity_earth_creatures_ValueSet
+    : public Bind_earth_creatures_ValueSet<
+          std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>> {
 
-  Entity_earth_creatures_Home(Entity_earth_creatures_Home &&) = delete;
-  Entity_earth_creatures_Home(const Entity_earth_creatures_Home &) = delete;
+  explicit Entity_earth_creatures_ValueSet(EntityScope parent_h)
+      : Bind_earth_creatures_ValueSet<
+            std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>>(
+            parent_h),
+        handle{parent_h, "ValueSet", pybind11::arithmetic()} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.def(pybind11::init<>());
-    handle.def(
-        "Method",
-        static_cast<double (earth::creatures::Home::*)(std::string &, int)>(
-            &earth::creatures::Home::Method));
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::enum_<earth::creatures::ValueSet> handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_Home : public EntityBase {
+
+  explicit Bind_earth_creatures_Home(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::Home"; }
 };
 
-struct Entity_earth_creatures_Home_Food : public EntityBase {
-  using HandleT = pybind11::enum_<earth::creatures::Home::Food>;
-  explicit Entity_earth_creatures_Home_Food(EntityScope &&parent_h)
-      : handle{pybind11::enum_<earth::creatures::Home::Food>(
-            parent_h, "Food", pybind11::arithmetic())} {}
+struct Entity_earth_creatures_Home
+    : public Bind_earth_creatures_Home<
+          std::decay_t<pybind11::class_<earth::creatures::Home>>> {
 
-  Entity_earth_creatures_Home_Food(Entity_earth_creatures_Home_Food &&) =
-      delete;
-  Entity_earth_creatures_Home_Food(const Entity_earth_creatures_Home_Food &) =
-      delete;
+  explicit Entity_earth_creatures_Home(EntityScope parent_h)
+      : Bind_earth_creatures_Home<
+            std::decay_t<pybind11::class_<earth::creatures::Home>>>(parent_h),
+        handle{parent_h, "Home"} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.value("MEAT", earth::creatures::Home::Food::MEAT);
-    handle.value("RICE", earth::creatures::Home::Food::RICE);
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::class_<earth::creatures::Home> handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_Home_Food : public EntityBase {
+
+  explicit Bind_earth_creatures_Home_Food(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::Home::Food"; }
 };
 
-struct Entity_earth_creatures_SweetHome : public EntityBase {
-  using HandleT = pybind11::class_<earth::creatures::SweetHome>;
-  explicit Entity_earth_creatures_SweetHome(EntityScope &&parent_h)
-      : handle{pybind11::class_<earth::creatures::SweetHome>(parent_h,
-                                                             "SweetHome")} {}
+struct Entity_earth_creatures_Home_Food
+    : public Bind_earth_creatures_Home_Food<
+          std::decay_t<pybind11::enum_<earth::creatures::Home::Food>>> {
 
-  Entity_earth_creatures_SweetHome(Entity_earth_creatures_SweetHome &&) =
-      delete;
-  Entity_earth_creatures_SweetHome(const Entity_earth_creatures_SweetHome &) =
-      delete;
+  explicit Entity_earth_creatures_Home_Food(EntityScope parent_h)
+      : Bind_earth_creatures_Home_Food<
+            std::decay_t<pybind11::enum_<earth::creatures::Home::Food>>>(
+            parent_h),
+        handle{parent_h, "Food", pybind11::arithmetic()} {}
 
-  void Update() override {
-    // Binding codes here
-    handle.def(
-        pybind11::init<int, float, const std::string &, std::string *>());
-    handle.def("Method",
-               static_cast<void (earth::creatures::SweetHome::*)(int)>(
-                   &earth::creatures::SweetHome::Method));
-    handle.def(
-        "Method",
-        static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
-            &earth::creatures::SweetHome::Method));
-    handle.def("VirtualMethod",
-               static_cast<void (earth::creatures::SweetHome::*)(int)>(
-                   &earth::creatures::SweetHome::VirtualMethod));
-    handle.def(
-        "VirtualMethod",
-        static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
-            &earth::creatures::SweetHome::VirtualMethod));
-    handle.def_static(
-        "StaticMethod",
-        static_cast<void (*)(int)>(&earth::creatures::SweetHome::StaticMethod));
-    handle.def_static("StaticMethod",
-                      static_cast<void (*)(std::string &)>(
-                          &earth::creatures::SweetHome::StaticMethod));
-    handle.def_readwrite("member", &earth::creatures::SweetHome::member);
-  }
+  void Update() override { Bind(&handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  HandleT handle;
+  pybind11::enum_<earth::creatures::Home::Food> handle;
+};
+
+template <class Pybind11T>
+struct Bind_earth_creatures_SweetHome : public EntityBase {
+
+  explicit Bind_earth_creatures_SweetHome(EntityScope parent_h) {}
+
+  virtual void Bind(void *handle_) {
+    auto &handle = *reinterpret_cast<Pybind11T *>(handle_);
+    handle.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    handle.def("TopFunction",
+               static_cast<void (*)(std::string &)>(&TopFunction));
+  }
+
   static const char *Key() { return "earth::creatures::SweetHome"; }
+};
+
+struct Entity_earth_creatures_SweetHome
+    : public Bind_earth_creatures_SweetHome<
+          std::decay_t<pybind11::class_<earth::creatures::SweetHome>>> {
+
+  explicit Entity_earth_creatures_SweetHome(EntityScope parent_h)
+      : Bind_earth_creatures_SweetHome<
+            std::decay_t<pybind11::class_<earth::creatures::SweetHome>>>(
+            parent_h),
+        handle{parent_h, "SweetHome"} {}
+
+  void Update() override { Bind(&handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::class_<earth::creatures::SweetHome> handle;
 };
 
 /**

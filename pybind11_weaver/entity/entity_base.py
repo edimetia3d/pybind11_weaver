@@ -70,7 +70,7 @@ class Entity(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
+    def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         """ An expression to create pybind 11 object on stack.
         
         Args:
@@ -92,6 +92,10 @@ class Entity(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def pybind11_type_str(self) -> str:
-        """ Full type of the pybind11 object  """
+    def default_pybind11_type_str(self) -> str:
+        """ Full type of the pybind11 object."""
         pass
+
+    def extra_code(self) -> str:
+        """Entity may inject extra code into the generated binding struct."""
+        return ""

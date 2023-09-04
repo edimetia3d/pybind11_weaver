@@ -17,7 +17,7 @@ class FunctionEntity(entity_base.Entity):
     def get_cpp_struct_name(self) -> str:
         return self.qualified_name().replace("::", "_")
 
-    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
+    def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         return f"static_cast<pybind11::module_&>({parent_scope_sym})"
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
@@ -29,5 +29,5 @@ class FunctionEntity(entity_base.Entity):
                 f"{pybind11_obj_sym}.def(\"{self.name}\",static_cast<{fn_pointer_type}>(&{self.qualified_name()}));")
         return code
 
-    def pybind11_type_str(self) -> str:
+    def default_pybind11_type_str(self) -> str:
         return f"pybind11::module_ &"

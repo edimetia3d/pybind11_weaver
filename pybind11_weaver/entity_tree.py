@@ -16,13 +16,13 @@ class _DummyNode(entity_base.Entity):
     def get_cpp_struct_name(self) -> str:
         raise NotImplementedError
 
-    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
+    def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         raise NotImplementedError
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
         raise NotImplementedError
 
-    def pybind11_type_str(self) -> str:
+    def default_pybind11_type_str(self) -> str:
         raise NotImplementedError
 
 
