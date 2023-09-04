@@ -1,5 +1,5 @@
 
-// GENERATED AT 09/04/2023, 19:15:44
+// GENERATED AT 09/05/2023, 00:18:28
 
 #include "sample.h"
 
@@ -88,7 +88,7 @@ struct CustomBindingRegistry {
     registry_.emplace(key, std::move(ctor));
   }
 
-  template <class BindingT> void SetCustom() {
+  template <class BindingT> void SetCustomBinding() {
     auto key = std::string(BindingT::Key());
     registry_.emplace(key, [](EntityScope &&parent_h) {
       return std::make_shared<BindingT>(std::move(parent_h));

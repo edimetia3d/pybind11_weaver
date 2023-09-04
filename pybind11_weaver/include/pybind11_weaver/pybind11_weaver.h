@@ -83,7 +83,7 @@ struct CustomBindingRegistry {
     registry_.emplace(key, std::move(ctor));
   }
 
-  template <class BindingT> void SetCustom() {
+  template <class BindingT> void SetCustomBinding() {
     auto key = std::string(BindingT::Key());
     registry_.emplace(key, [](EntityScope &&parent_h) {
       return std::make_shared<BindingT>(std::move(parent_h));
