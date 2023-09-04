@@ -70,11 +70,11 @@ class Entity(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def create_pybind11_obj_expr(self, module_sym: str) -> str:
+    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
         """ An expression to create pybind 11 object on stack.
         
         Args:
-            module_sym: the module var name this entity should bind to
+            parent_scope_sym: the module var name this entity should bind to
 
         """
         pass

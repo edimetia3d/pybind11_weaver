@@ -4,16 +4,15 @@ from . import entity_tree
 from . import gen_unit
 
 entity_template = """
-struct {entity_struct_name} {{
+struct {entity_struct_name} : public EntityBase {{
   using HandleT = {handle_type}; 
-  template<class ParentT>
-  explicit {entity_struct_name}(ParentT && parent_h):handle{{ {init_handle_expr} }}{{
+  explicit {entity_struct_name}(ParentEntity && parent_h):handle{{ {init_handle_expr} }}{{
   }}
 
   {entity_struct_name}({entity_struct_name} &&) = delete;
   {entity_struct_name}(const {entity_struct_name} &) = delete;
   
-  void Update(){{
+  void Update() {{
     //Binding codes here
 {binding_stmts}
   }}
@@ -30,6 +29,29 @@ file_template = """
 #include <pybind11_weaver/pybind11_weaver.h>
 
 namespace {{
+
+struct EntityBase{{
+  virtual ~EntityBase() = default;
+}};
+
+struct ParentEntity {{
+  explicit ParentEntity(pybind11::module_ &parent_h) : module_{{&parent_h}} {{}}
+  explicit ParentEntity(pybind11::detail::generic_type &parent_h) : type_{{&parent_h}} {{}}
+  explicit operator pybind11::module_ &() {{ return *module_; }}
+  explicit operator pybind11::detail::generic_type &() {{ return *type_; }}
+  operator pybind11::handle &() {{
+    if (module_) {{
+      return *module_;
+    }} else {{
+      return *type_;
+    }}
+  }}
+
+private:
+  pybind11::detail::generic_type *type_ = nullptr;
+  pybind11::module_ *module_ = nullptr;
+}};
+
 {entity_struct_decls}
 
 /**
@@ -64,13 +86,13 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
             handle_type=entity.pybind11_type_str(),
             entity_struct_name=entity_struct_name,
             parent_expr=parent_sym,
-            init_handle_expr=entity.create_pybind11_obj_expr("std::forward<ParentT>(parent_h)"),
+            init_handle_expr=entity.create_pybind11_obj_expr("parent_h"),
             binding_stmts="\n".join(entity.update_stmts("handle")))
         entity_struct_decls.append(struct_decl)
 
         # generate decl
         create_entity_var_stmts.append(
-            f"auto {entity_obj_sym} = std::make_shared<{entity_struct_name}>({parent_sym});")
+            f"auto {entity_obj_sym} = std::make_shared<{entity_struct_name}>(ParentEntity({parent_sym}));")
 
         # generate updates
         update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")

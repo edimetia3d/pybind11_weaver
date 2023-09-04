@@ -14,8 +14,8 @@ class EnumEntity(entity_base.Entity):
     def get_cpp_struct_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
 
-    def create_pybind11_obj_expr(self, module_sym: str) -> str:
-        code = f"{self.pybind11_type_str()}({module_sym}, \"{self.name}\",pybind11::arithmetic())"
+    def create_pybind11_obj_expr(self, parent_scope_sym: str) -> str:
+        code = f"{self.pybind11_type_str()}({parent_scope_sym}, \"{self.name}\",pybind11::arithmetic())"
         return code
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:

@@ -1,5 +1,5 @@
 
-// GENERATED AT 09/03/2023, 22:31:01
+// GENERATED AT 09/04/2023, 11:19:34
 
 #include "sample.h"
 
@@ -7,11 +7,33 @@
 
 namespace {
 
-struct Entity_TopFunction {
+struct EntityBase {
+  virtual ~EntityBase() = default;
+};
+
+struct ParentEntity {
+  explicit ParentEntity(pybind11::module_ &parent_h) : module_{&parent_h} {}
+  explicit ParentEntity(pybind11::detail::generic_type &parent_h)
+      : type_{&parent_h} {}
+  explicit operator pybind11::module_ &() { return *module_; }
+  explicit operator pybind11::detail::generic_type &() { return *type_; }
+  operator pybind11::handle &() {
+    if (module_) {
+      return *module_;
+    } else {
+      return *type_;
+    }
+  }
+
+private:
+  pybind11::detail::generic_type *type_ = nullptr;
+  pybind11::module_ *module_ = nullptr;
+};
+
+struct Entity_TopFunction : public EntityBase {
   using HandleT = pybind11::module_ &;
-  template <class ParentT>
-  explicit Entity_TopFunction(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h)} {}
+  explicit Entity_TopFunction(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
   Entity_TopFunction(Entity_TopFunction &&) = delete;
   Entity_TopFunction(const Entity_TopFunction &) = delete;
@@ -25,11 +47,10 @@ struct Entity_TopFunction {
   HandleT handle;
 };
 
-struct Entity_TopFunctionDef {
+struct Entity_TopFunctionDef : public EntityBase {
   using HandleT = pybind11::module_ &;
-  template <class ParentT>
-  explicit Entity_TopFunctionDef(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h)} {}
+  explicit Entity_TopFunctionDef(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
   Entity_TopFunctionDef(Entity_TopFunctionDef &&) = delete;
   Entity_TopFunctionDef(const Entity_TopFunctionDef &) = delete;
@@ -41,11 +62,11 @@ struct Entity_TopFunctionDef {
   HandleT handle;
 };
 
-struct Entity_earth {
+struct Entity_earth : public EntityBase {
   using HandleT = pybind11::module_;
-  template <class ParentT>
-  explicit Entity_earth(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h).def_submodule("earth")} {}
+  explicit Entity_earth(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "earth")} {}
 
   Entity_earth(Entity_earth &&) = delete;
   Entity_earth(const Entity_earth &) = delete;
@@ -56,11 +77,11 @@ struct Entity_earth {
   HandleT handle;
 };
 
-struct Entity_earth_creatures {
+struct Entity_earth_creatures : public EntityBase {
   using HandleT = pybind11::module_;
-  template <class ParentT>
-  explicit Entity_earth_creatures(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h).def_submodule("creatures")} {}
+  explicit Entity_earth_creatures(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "creatures")} {}
 
   Entity_earth_creatures(Entity_earth_creatures &&) = delete;
   Entity_earth_creatures(const Entity_earth_creatures &) = delete;
@@ -71,11 +92,10 @@ struct Entity_earth_creatures {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_NSFunction {
+struct Entity_earth_creatures_NSFunction : public EntityBase {
   using HandleT = pybind11::module_ &;
-  template <class ParentT>
-  explicit Entity_earth_creatures_NSFunction(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h)} {}
+  explicit Entity_earth_creatures_NSFunction(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
   Entity_earth_creatures_NSFunction(Entity_earth_creatures_NSFunction &&) =
       delete;
@@ -90,11 +110,10 @@ struct Entity_earth_creatures_NSFunction {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_NSFunctionDef {
+struct Entity_earth_creatures_NSFunctionDef : public EntityBase {
   using HandleT = pybind11::module_ &;
-  template <class ParentT>
-  explicit Entity_earth_creatures_NSFunctionDef(ParentT &&parent_h)
-      : handle{std::forward<ParentT>(parent_h)} {}
+  explicit Entity_earth_creatures_NSFunctionDef(ParentEntity &&parent_h)
+      : handle{static_cast<pybind11::module_ &>(parent_h)} {}
 
   Entity_earth_creatures_NSFunctionDef(
       Entity_earth_creatures_NSFunctionDef &&) = delete;
@@ -109,13 +128,11 @@ struct Entity_earth_creatures_NSFunctionDef {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_Animal {
+struct Entity_earth_creatures_Animal : public EntityBase {
   using HandleT = pybind11::enum_<earth::creatures::Animal>;
-  template <class ParentT>
-  explicit Entity_earth_creatures_Animal(ParentT &&parent_h)
+  explicit Entity_earth_creatures_Animal(ParentEntity &&parent_h)
       : handle{pybind11::enum_<earth::creatures::Animal>(
-            std::forward<ParentT>(parent_h), "Animal",
-            pybind11::arithmetic())} {}
+            parent_h, "Animal", pybind11::arithmetic())} {}
 
   Entity_earth_creatures_Animal(Entity_earth_creatures_Animal &&) = delete;
   Entity_earth_creatures_Animal(const Entity_earth_creatures_Animal &) = delete;
@@ -128,13 +145,11 @@ struct Entity_earth_creatures_Animal {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_ValueSet {
+struct Entity_earth_creatures_ValueSet : public EntityBase {
   using HandleT = pybind11::enum_<earth::creatures::ValueSet>;
-  template <class ParentT>
-  explicit Entity_earth_creatures_ValueSet(ParentT &&parent_h)
+  explicit Entity_earth_creatures_ValueSet(ParentEntity &&parent_h)
       : handle{pybind11::enum_<earth::creatures::ValueSet>(
-            std::forward<ParentT>(parent_h), "ValueSet",
-            pybind11::arithmetic())} {}
+            parent_h, "ValueSet", pybind11::arithmetic())} {}
 
   Entity_earth_creatures_ValueSet(Entity_earth_creatures_ValueSet &&) = delete;
   Entity_earth_creatures_ValueSet(const Entity_earth_creatures_ValueSet &) =
@@ -149,12 +164,10 @@ struct Entity_earth_creatures_ValueSet {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_Home {
+struct Entity_earth_creatures_Home : public EntityBase {
   using HandleT = pybind11::class_<earth::creatures::Home>;
-  template <class ParentT>
-  explicit Entity_earth_creatures_Home(ParentT &&parent_h)
-      : handle{pybind11::class_<earth::creatures::Home>(
-            std::forward<ParentT>(parent_h), "Home")} {}
+  explicit Entity_earth_creatures_Home(ParentEntity &&parent_h)
+      : handle{pybind11::class_<earth::creatures::Home>(parent_h, "Home")} {}
 
   Entity_earth_creatures_Home(Entity_earth_creatures_Home &&) = delete;
   Entity_earth_creatures_Home(const Entity_earth_creatures_Home &) = delete;
@@ -170,12 +183,11 @@ struct Entity_earth_creatures_Home {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_Home_Food {
+struct Entity_earth_creatures_Home_Food : public EntityBase {
   using HandleT = pybind11::enum_<earth::creatures::Home::Food>;
-  template <class ParentT>
-  explicit Entity_earth_creatures_Home_Food(ParentT &&parent_h)
+  explicit Entity_earth_creatures_Home_Food(ParentEntity &&parent_h)
       : handle{pybind11::enum_<earth::creatures::Home::Food>(
-            std::forward<ParentT>(parent_h), "Food", pybind11::arithmetic())} {}
+            parent_h, "Food", pybind11::arithmetic())} {}
 
   Entity_earth_creatures_Home_Food(Entity_earth_creatures_Home_Food &&) =
       delete;
@@ -190,12 +202,11 @@ struct Entity_earth_creatures_Home_Food {
   HandleT handle;
 };
 
-struct Entity_earth_creatures_SweetHome {
+struct Entity_earth_creatures_SweetHome : public EntityBase {
   using HandleT = pybind11::class_<earth::creatures::SweetHome>;
-  template <class ParentT>
-  explicit Entity_earth_creatures_SweetHome(ParentT &&parent_h)
-      : handle{pybind11::class_<earth::creatures::SweetHome>(
-            std::forward<ParentT>(parent_h), "SweetHome")} {}
+  explicit Entity_earth_creatures_SweetHome(ParentEntity &&parent_h)
+      : handle{pybind11::class_<earth::creatures::SweetHome>(parent_h,
+                                                             "SweetHome")} {}
 
   Entity_earth_creatures_SweetHome(Entity_earth_creatures_SweetHome &&) =
       delete;
@@ -237,17 +248,24 @@ struct Entity_earth_creatures_SweetHome {
  *function on its destruction.
  **/
 [[nodiscard]] pybind11_weaver::CallUpdateGuard DeclFn(pybind11::module &m) {
-  auto v0 = std::make_shared<Entity_TopFunction>(m);
-  auto v1 = std::make_shared<Entity_TopFunctionDef>(m);
-  auto v2 = std::make_shared<Entity_earth>(m);
-  auto v3 = std::make_shared<Entity_earth_creatures>(v2->handle);
-  auto v4 = std::make_shared<Entity_earth_creatures_NSFunction>(v3->handle);
-  auto v5 = std::make_shared<Entity_earth_creatures_NSFunctionDef>(v3->handle);
-  auto v6 = std::make_shared<Entity_earth_creatures_Animal>(v3->handle);
-  auto v7 = std::make_shared<Entity_earth_creatures_ValueSet>(v3->handle);
-  auto v8 = std::make_shared<Entity_earth_creatures_Home>(v3->handle);
-  auto v9 = std::make_shared<Entity_earth_creatures_Home_Food>(v8->handle);
-  auto v10 = std::make_shared<Entity_earth_creatures_SweetHome>(v3->handle);
+  auto v0 = std::make_shared<Entity_TopFunction>(ParentEntity(m));
+  auto v1 = std::make_shared<Entity_TopFunctionDef>(ParentEntity(m));
+  auto v2 = std::make_shared<Entity_earth>(ParentEntity(m));
+  auto v3 = std::make_shared<Entity_earth_creatures>(ParentEntity(v2->handle));
+  auto v4 = std::make_shared<Entity_earth_creatures_NSFunction>(
+      ParentEntity(v3->handle));
+  auto v5 = std::make_shared<Entity_earth_creatures_NSFunctionDef>(
+      ParentEntity(v3->handle));
+  auto v6 =
+      std::make_shared<Entity_earth_creatures_Animal>(ParentEntity(v3->handle));
+  auto v7 = std::make_shared<Entity_earth_creatures_ValueSet>(
+      ParentEntity(v3->handle));
+  auto v8 =
+      std::make_shared<Entity_earth_creatures_Home>(ParentEntity(v3->handle));
+  auto v9 = std::make_shared<Entity_earth_creatures_Home_Food>(
+      ParentEntity(v8->handle));
+  auto v10 = std::make_shared<Entity_earth_creatures_SweetHome>(
+      ParentEntity(v3->handle));
 
   auto update_fn = [=]() {
     v0->Update();
