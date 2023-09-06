@@ -1,4 +1,5 @@
 from typing import List, Dict
+import weakref
 
 from clang import cindex
 
@@ -12,6 +13,16 @@ class _DummyNode(entity_base.Entity):
 
     def __init__(self, cursor: cindex.Cursor):
         entity_base.Entity.__init__(self, cursor)
+
+    def transfer(self, new_entity: "Entity"):
+        # update parent
+        self.parent().children[self.name] = new_entity
+
+        # update children
+        for child in self.children:
+            assert child.parent() is self
+            child._parent = weakref.ref(new_entity)
+        new_entity.children = self.children
 
     def get_cpp_struct_name(self) -> str:
         raise NotImplementedError
@@ -48,7 +59,7 @@ class EntityTree:
         # setup entity
         entity_name = entity.name
         if entity_name in outer:
-            if outer[entity_name].cursor is None:
+            if isinstance(outer[entity_name], _DummyNode):
                 outer[entity_name].transfer(entity)
             else:
                 assert isinstance(entity, funktion.FunctionEntity)

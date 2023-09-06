@@ -32,16 +32,6 @@ class Entity(abc.ABC):
     def __setitem__(self, key, value):
         self.children[key] = value
 
-    def transfer(self, new_entity: "Entity"):
-        # update parent
-        self.parent().children[self.name] = new_entity
-
-        # update children
-        for child in self.children:
-            assert child.parent() is self
-            child._parent = weakref.ref(new_entity)
-        new_entity.children = self.children
-
     def update_parent(self, parent: "Entity"):
         if self._parent:
             assert self._parent() is parent
