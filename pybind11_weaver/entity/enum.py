@@ -22,7 +22,11 @@ class EnumEntity(entity_base.Entity):
         type_full_name = self.cursor.type.spelling
         code = []
         for cursor in self.cursor.get_children():
-            code.append(f"{pybind11_obj_sym}.value(\"{cursor.spelling}\", {type_full_name}::{cursor.spelling});")
+            args_for_value = [f'"{cursor.spelling}"', f'{type_full_name}::{cursor.spelling}']
+            if cursor.brief_comment:
+                args_for_value.append(f'R"({cursor.brief_comment})"')
+            code.append(
+                f"{pybind11_obj_sym}.value({','.join(args_for_value)});")
         return code
 
     def default_pybind11_type_str(self) -> str:

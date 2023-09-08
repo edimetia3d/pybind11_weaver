@@ -293,8 +293,8 @@ struct Bind_earth_creatures_Animal : public EntityBase {
   explicit Bind_earth_creatures_Animal(EntityScope parent_h) {}
 
   virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.value("DOG", earth::creatures::Animal::DOG);
-    pb11_obj.value("CAT", earth::creatures::Animal::CAT);
+    pb11_obj.value("DOG", earth::creatures::Animal::DOG, R"(Dog doc)");
+    pb11_obj.value("CAT", earth::creatures::Animal::CAT, R"(Cat doc)");
   }
 
   static const char *Key() { return "earth::creatures::Animal"; }
