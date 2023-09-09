@@ -18,17 +18,17 @@ class EnumEntity(entity_base.Entity):
 
     def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         code = f"{parent_scope_sym}, \"{self.name}\",pybind11::arithmetic()"
+        if self.gu.io_config.gen_docstring:
+            code = entity_base._inject_docstring(code, self.cursor, "append")
         return code
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
         type_full_name = self.cursor.type.spelling
         code = []
         for cursor in self.cursor.get_children():
-            args_for_value = [f'"{cursor.spelling}"', f'{type_full_name}::{cursor.spelling}']
-            if cursor.brief_comment:
-                args_for_value.append(f'R"({cursor.brief_comment})"')
-            code.append(
-                f"{pybind11_obj_sym}.value({','.join(args_for_value)});")
+            code.append(f"{pybind11_obj_sym}.value(\"{cursor.spelling}\", {type_full_name}::{cursor.spelling});")
+            if self.gu.io_config.gen_docstring:
+                code[-1] = entity_base._inject_docstring(code[-1], cursor, "last_arg")
         return code
 
     def default_pybind11_type_str(self) -> str:

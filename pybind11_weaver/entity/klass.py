@@ -14,7 +14,8 @@ _logger = logging.getLogger(__name__)
 
 class MethodCoder:
 
-    def __init__(self, cursor, scope_full_name):
+    def __init__(self, cursor, scope_full_name, inject_docstring):
+        self.inect_docstring = inject_docstring
         self.fn_name = cursor.spelling
         self.call_stmt = f"""BindMethod_{self.fn_name}(obj);"""
         self.def_template = f"""
@@ -48,6 +49,9 @@ virtual void BindMethod_{self.fn_name}(Pybind11T & obj){{{{
             if is_virtual(cursor):
                 _logger.warning(
                     f"virtual method {cursor.spelling} is not fully supported yet, override in python is not allowed.")
+        if self.inect_docstring:
+            self.body[-1] = entity_base._inject_docstring(
+                self.body[-1], cursor, "last_arg")
 
 
 class ClassEntity(entity_base.Entity):
@@ -62,6 +66,8 @@ class ClassEntity(entity_base.Entity):
 
     def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         code = f'{parent_scope_sym},"{self.name}"'
+        if self.gu.io_config.gen_docstring:
+            code = entity_base._inject_docstring(code, self.cursor, "append")
         return code
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
@@ -80,13 +86,17 @@ class ClassEntity(entity_base.Entity):
                     f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
         if not ctor_found:
             codes.append(f"{pybind11_obj_sym}.def(pybind11::init<>());")
+        if self.gu.io_config.gen_docstring:
+            for i, code in enumerate(codes):
+                codes[i] = entity_base._inject_docstring(code, cursor, "last_arg")
 
         # generate method binding
         methods: Dict[str, MethodCoder] = dict()
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXX_METHOD and is_pubic(cursor):
                 if not cursor.spelling in methods:
-                    methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name())
+                    methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name(),
+                                                           self.gu.io_config.gen_docstring)
                 else:
                     methods[cursor.spelling].append(cursor, self.qualified_name())
 
@@ -111,6 +121,8 @@ void Pybind11WeaverBindAllMethods(Pybind11T & obj){{
             if cursor.kind == cindex.CursorKind.FIELD_DECL and is_pubic(cursor):
                 codes.append(
                     f"{pybind11_obj_sym}.def_readwrite(\"{cursor.spelling}\",&{self.qualified_name()}::{cursor.spelling});")
+                if self.gu.io_config.gen_docstring:
+                    codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
 
         return codes
 

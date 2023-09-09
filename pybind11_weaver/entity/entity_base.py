@@ -1,12 +1,23 @@
 import abc
 import functools
-from typing import List, Dict
 import weakref
+from typing import List, Dict
 
 from clang import cindex
 
-from pybind11_weaver.utils import scope_list
 from pybind11_weaver import gen_unit
+from pybind11_weaver.utils import scope_list
+
+
+def _inject_docstring(code: str, cursor: cindex.Cursor, insert_mode: str):
+    if not cursor.raw_comment:
+        return code
+    if insert_mode == "append":
+        code += f',R"({cursor.raw_comment})"'
+    if insert_mode == "last_arg":
+        pos = code.rfind(")")
+        code = code[:pos] + f',R"({cursor.raw_comment})"' + code[pos:]
+    return code
 
 
 class Entity(abc.ABC):

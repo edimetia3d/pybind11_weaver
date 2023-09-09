@@ -8,6 +8,7 @@ from pybind11_weaver.utils import fn
 
 from pybind11_weaver import gen_unit
 
+
 class FunctionEntity(entity_base.Entity):
 
     def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
@@ -28,6 +29,8 @@ class FunctionEntity(entity_base.Entity):
             fn_pointer_type = fn.get_fn_pointer_type(t)
             code.append(
                 f"{pybind11_obj_sym}.def(\"{self.name}\",static_cast<{fn_pointer_type}>(&{self.qualified_name()}));")
+            if self.gu.io_config.gen_docstring:
+                code[-1] = entity_base._inject_docstring(code[-1], t, "last_arg")
         return code
 
     def default_pybind11_type_str(self) -> str:

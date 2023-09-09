@@ -1,5 +1,5 @@
 
-// GENERATED AT 09/05/2023, 00:18:28
+// GENERATED AT 09/09/2023, 13:09:27
 
 #include "sample.h"
 
@@ -128,7 +128,10 @@ template <class Pybind11T> struct Bind_TopFunction : public EntityBase {
   explicit Bind_TopFunction(EntityScope parent_h) {}
 
   virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def("TopFunction", static_cast<void (*)(int)>(&TopFunction));
+    pb11_obj.def("TopFunction", static_cast<void (*)(int)>(&TopFunction), R"(/**
+ * This is Function doc
+ * @param i This is i doc
+ */)");
     pb11_obj.def("TopFunction",
                  static_cast<void (*)(std::string &)>(&TopFunction));
   }
@@ -293,8 +296,9 @@ struct Bind_earth_creatures_Animal : public EntityBase {
   explicit Bind_earth_creatures_Animal(EntityScope parent_h) {}
 
   virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.value("DOG", earth::creatures::Animal::DOG, R"(Dog doc)");
-    pb11_obj.value("CAT", earth::creatures::Animal::CAT, R"(Cat doc)");
+    pb11_obj.value("DOG", earth::creatures::Animal::DOG,
+                   R"(///< This is Enum Item)");
+    pb11_obj.value("CAT", earth::creatures::Animal::CAT, R"(///< Cat doc)");
   }
 
   static const char *Key() { return "earth::creatures::Animal"; }
@@ -307,7 +311,8 @@ struct Entity_earth_creatures_Animal
   explicit Entity_earth_creatures_Animal(EntityScope parent_h)
       : Bind_earth_creatures_Animal<
             std::decay_t<pybind11::enum_<earth::creatures::Animal>>>(parent_h),
-        handle{parent_h, "Animal", pybind11::arithmetic()} {}
+        handle{parent_h, "Animal", pybind11::arithmetic(),
+               R"(/// This is Enum doc)"} {}
 
   void Update() override { Bind(handle); }
 
@@ -427,7 +432,8 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
     pb11_obj.def(
         pybind11::init<int, float, const std::string &, std::string *>());
     Pybind11WeaverBindAllMethods(pb11_obj);
-    pb11_obj.def_readwrite("member", &earth::creatures::SweetHome::member);
+    pb11_obj.def_readwrite("member", &earth::creatures::SweetHome::member,
+                           R"(///< This is Member doc)");
   }
 
   void Pybind11WeaverBindAllMethods(Pybind11T &obj) {
@@ -437,8 +443,13 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
   }
 
   virtual void BindMethod_Method(Pybind11T &obj) {
-    obj.def("Method", static_cast<int (earth::creatures::SweetHome::*)(int)>(
-                          &earth::creatures::SweetHome::Method));
+    obj.def("Method",
+            static_cast<int (earth::creatures::SweetHome::*)(int)>(
+                &earth::creatures::SweetHome::Method),
+            R"(/**
+   * This is Method doc
+   * @return
+   */)");
     obj.def("Method",
             static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
                 &earth::creatures::SweetHome::Method));
@@ -473,7 +484,9 @@ struct Entity_earth_creatures_SweetHome
       : Bind_earth_creatures_SweetHome<
             std::decay_t<pybind11::class_<earth::creatures::SweetHome>>>(
             parent_h),
-        handle{parent_h, "SweetHome"} {}
+        handle{parent_h, "SweetHome", R"(/**
+ * This is Class doc
+ */)"} {}
 
   void Update() override { Bind(handle); }
 

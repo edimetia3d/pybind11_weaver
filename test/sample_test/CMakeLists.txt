@@ -17,8 +17,9 @@ add_test(build_extension
 
 add_test(NAME launch_test_module
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/launch_module.py
-    DEPENDS build_extension
 )
+set_tests_properties(launch_test_module PROPERTIES DEPENDS "build_extension;update_sample_test")
+
 set_tests_properties(launch_test_module
     PROPERTIES ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}")
 

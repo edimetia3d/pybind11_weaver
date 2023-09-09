@@ -3,6 +3,10 @@
 
 #include <string>
 
+/**
+ * This is Function doc
+ * @param i This is i doc
+ */
 void TopFunction(int);
 void TopFunction(std::string &);
 inline void TopFunctionDef() {}
@@ -10,9 +14,9 @@ namespace earth::creatures {
 
 int NSFunction(const std::string &str);
 inline void NSFunctionDef() {}
-/// This is Animal doc
+/// This is Enum doc
 enum Animal {
-  DOG, ///< Dog doc
+  DOG, ///< This is Enum Item
   CAT, ///< Cat doc
 };
 
@@ -28,9 +32,18 @@ struct Home {
   };
   double Method(std::string &, int);
 };
+
+/**
+ * This is Class doc
+ */
 class SweetHome {
 public:
   SweetHome(int, float, const std::string &, std::string *){};
+
+  /**
+   * This is Method doc
+   * @return
+   */
   int Method(int);
   void Method(std::string &);
   virtual void VirtualMethod(int) {}
@@ -38,7 +51,7 @@ public:
   __attribute__((visibility("hidden"))) void HiddenMethod(int);
   static void StaticMethod(int);
   static void StaticMethod(std::string &);
-  int member;
+  int member; ///< This is Member doc
 
 private:
   SweetHome() = default;

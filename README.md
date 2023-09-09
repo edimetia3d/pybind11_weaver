@@ -15,14 +15,12 @@ This tool takes a [sample.h](https://github.com/edimetia3d/pybind11_weaver/blob/
 ## Features & Roadmap
 - [x] Namespace hierarchy to Python submodules
 - [x] Enum
-- [ ] Enum doc
 - [x] Function, function overload
-- [ ] Function doc
 - [x] Class method, method overloading, static method, static method overloading, constructor, constructor overloading
 - [x] Class field
 - [x] Class access control
+- [x] Generate docstring from c++ comment, for enum, enum item, function, class, class method, class field
 - [ ] Trampoline class for virtual function
-- [ ] Class doc, method doc, field doc
 - [x] Support working with hand-written code
 - [ ] Auto snake case
 
