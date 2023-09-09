@@ -25,6 +25,7 @@ io_configs:
       decl_fn_name: "Foo"
       extra_cxx_flags: ["c","d"] 
       root_module_namespace: "gi::jo"
+      gen_docstring: false
 """
         cfg = gen_unit.load_config(cfg)
         self.assertIsNone(cfg["common_config"]["compiler"])
@@ -35,6 +36,7 @@ io_configs:
         self.assertEqual(cfg["io_configs"][0]["decl_fn_name"], "Foo")
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], ["c", "d"])
         self.assertEqual(cfg["io_configs"][0]["root_module_namespace"], "gi::jo")
+        self.assertEqual(cfg["io_configs"][0]["gen_docstring"], False)
 
     def test_load_default_config(self):
         cfg = gen_unit.load_config("")
@@ -59,6 +61,7 @@ io_configs:
         self.assertEqual(cfg["io_configs"][1]["decl_fn_name"], "DeclFn")
         self.assertEqual(cfg["io_configs"][1]["extra_cxx_flags"], [])
         self.assertEqual(cfg["io_configs"][1]["root_module_namespace"], "")
+        self.assertEqual(cfg["io_configs"][0]["gen_docstring"], True)
 
     def test_gen_unit_load(self):
         gen_units = gen_unit.load_gen_unit_from_config("""

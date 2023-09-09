@@ -60,6 +60,7 @@ def cleanup_config(cfg):
             "decl_fn_name": "DeclFn",
             "root_module_namespace": "",
             "extra_cxx_flags": [],
+            "gen_docstring": True,
         })
     return cfg
 

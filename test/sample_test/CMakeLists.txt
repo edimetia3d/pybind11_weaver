@@ -4,7 +4,6 @@ if (NOT DEFINED pybind11_DIR)
 endif ()
 
 find_package(pybind11 REQUIRED CONFIG)
-find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../../pybind11_weaver/include)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../..)
 pybind11_add_module(all_feature_module module.cpp)

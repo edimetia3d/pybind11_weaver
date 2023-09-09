@@ -10,4 +10,5 @@ io_configs:
     decl_fn_name: "DeclFn" # The name of the function that will be used to declare the entities, default is "DeclFn".
     extra_cxx_flags: [ ] # these flags will be used only for this file
     root_module_namespace: "" # by default, the global name space will map to python's root module, user could use this arg to specify the namespace that will be used as root module.
+    gen_docstring: true # whether to generate docstring for the generated python code
 
