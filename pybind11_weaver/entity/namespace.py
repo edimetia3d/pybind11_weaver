@@ -4,11 +4,13 @@ from clang import cindex
 
 from . import entity_base
 
+from pybind11_weaver import gen_unit
+
 
 class NamespaceEntity(entity_base.Entity):
 
-    def __init__(self, cursor: cindex.Cursor):
-        entity_base.Entity.__init__(self, cursor)
+    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
+        entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind == cindex.CursorKind.NAMESPACE
 
     def get_cpp_struct_name(self) -> str:

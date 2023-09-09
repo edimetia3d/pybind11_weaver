@@ -6,6 +6,7 @@ import weakref
 from clang import cindex
 
 from pybind11_weaver.utils import scope_list
+from pybind11_weaver import gen_unit
 
 
 class Entity(abc.ABC):
@@ -15,12 +16,10 @@ class Entity(abc.ABC):
 
     """
 
-    def __init__(self, cursor: cindex.Cursor, parent: "Entity" = None):
+    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
+        self.gu = gu
         self.cursor = cursor
-        if parent:
-            self._parent = weakref.ref(parent)
-        else:
-            self._parent = None
+        self._parent = None
         self.children: Dict[str, Entity] = {}
 
     def __contains__(self, item):

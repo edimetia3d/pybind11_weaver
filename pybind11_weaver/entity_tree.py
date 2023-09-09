@@ -81,8 +81,6 @@ class EntityTree:
             new_entity = create_entity(cursor)
             if new_entity is not None:
                 self.nest_update_parent(new_entity)
-                if isinstance(new_entity, klass.ClassEntity):
-                    new_entity.is_visible_fn = gu.is_visible
 
     def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str]):
         file = cursor.location.file

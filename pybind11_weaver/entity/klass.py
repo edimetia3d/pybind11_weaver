@@ -7,6 +7,8 @@ from pybind11_weaver.utils import fn
 
 import logging
 
+from pybind11_weaver import gen_unit
+
 _logger = logging.getLogger(__name__)
 
 
@@ -50,11 +52,10 @@ virtual void BindMethod_{self.fn_name}(Pybind11T & obj){{{{
 
 class ClassEntity(entity_base.Entity):
 
-    def __init__(self, cursor: cindex.Cursor):
-        entity_base.Entity.__init__(self, cursor)
+    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
+        entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind in [cindex.CursorKind.CLASS_DECL, cindex.CursorKind.STRUCT_DECL]
         self.extra_methods_codes = []
-        self.is_visible_fn = None  # set by entity_tree
 
     def get_cpp_struct_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
@@ -67,7 +68,7 @@ class ClassEntity(entity_base.Entity):
         codes = []
 
         def is_pubic(cursor):
-            return cursor.access_specifier == cindex.AccessSpecifier.PUBLIC and self.is_visible_fn(cursor)
+            return cursor.access_specifier == cindex.AccessSpecifier.PUBLIC and self.gu.is_visible(cursor)
 
         # generate constructor binding
         ctor_found = False
