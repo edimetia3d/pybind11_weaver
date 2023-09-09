@@ -22,17 +22,18 @@ classifiers = [
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Compilers"
 ]
-[project.urls]
-Homepage = "https://github.com/edimetia3d/pybind11_weaver"
-Documentation = "https://github.com/edimetia3d/pybind11_weaver"
-Repository = "https://github.com/edimetia3d/pybind11_weaver"
-Changelog = "https://github.com/edimetia3d/pybind11_weaver/releases"
 dependencies = [
     "libclang",
     "PyYAML",
     "pybind11",
 ]
 dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/edimetia3d/pybind11_weaver"
+Documentation = "https://github.com/edimetia3d/pybind11_weaver"
+Repository = "https://github.com/edimetia3d/pybind11_weaver"
+Changelog = "https://github.com/edimetia3d/pybind11_weaver/releases"
 
 [tool.setuptools.dynamic]
 version = { attr = "pybind11_weaver.__VERSION__" }
