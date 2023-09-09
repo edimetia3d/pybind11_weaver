@@ -126,8 +126,8 @@ def gen_code(config_file: str):
         entity_root = entity_tree.EntityTree()
         entity_root.load_from_gu(gu)
         target_entities = entity_root.entities
-        if gu.options.root_module_namespace != "":
-            ns_s = gu.options.root_module_namespace.split("::")
+        if gu.io_config.root_module_namespace != "":
+            ns_s = gu.io_config.root_module_namespace.split("::")
             for ns in ns_s:
                 target_entities = target_entities[ns].children
         entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, _ = gen_binding_codes(
@@ -145,14 +145,14 @@ def gen_code(config_file: str):
             date=gu.creation_time,
             include_directives="\n".join(gu.src_file_includes()),
             pybind11_weaver_header=pybind11_weaver_header,
-            decl_fn_name=gu.options.decl_fn_name,
+            decl_fn_name=gu.io_config.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
             update_entity_var_stmts="\n".join(update_entity_var_stmts),
         )
-        with open(gu.options.output, "w") as f:
+        with open(gu.io_config.output, "w") as f:
             f.write(file_content)
 
         # format file if clang-format found
         if shutil.which("clang-format") is not None:
-            os.system(f"clang-format -i {gu.options.output} --style=LLVM")
+            os.system(f"clang-format -i {gu.io_config.output} --style=LLVM")

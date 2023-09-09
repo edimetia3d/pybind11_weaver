@@ -3,12 +3,11 @@ __all__ = [
     "load_gen_unit_from_config"
 ]
 
-import collections
 import copy
 import datetime
 import os.path
 import sysconfig
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 
 import pybind11
 import yaml
@@ -106,14 +105,18 @@ def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "")
 
 
 class GenUnit:
-    Options = collections.namedtuple("Options", ("output", "decl_fn_name", "root_module_namespace"))
+    class IOConifg:
+        def __init__(self, key_values: Dict[str, Any]):
+            for k, v in key_values.items():
+                setattr(self, k, v)
 
-    def __init__(self, tu, src_files: List[str], options: Options, visibility_hidden: bool):
+    def __init__(self, tu, io_config: Dict[str, Any], cxx_flags: List[str]):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         self.tu: cindex.TranslationUnit = tu
-        self.src_files: List[str] = src_files
-        self.options: GenUnit.Options = options
-        self.fvisibility_hidden = visibility_hidden
+        self.src_files: List[str] = io_config["inputs"]
+        self.io_config = GenUnit.IOConifg(io_config)
+        self.cxx_flags = cxx_flags
+        self.fvisibility_hidden = ("-fvisibility=hidden" in " ".join(cxx_flags))
 
     def is_visible(self, cursor: cindex.Cursor):
         """Utility method to check if a cursor is visible in the current translation unit."""
@@ -147,14 +150,9 @@ def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
     common_flags = cfg["common_config"]["cxx_flags"] + default_headers
     common_flags = common_flags + ["-I" + path for path in cfg["common_config"]["include_directories"]]
     ret = []
-    for entry in cfg["io_configs"]:
-        cxx_flags = common_flags + entry["extra_cxx_flags"]
-        src_tu, _ = load_tu(entry["inputs"], cxx_flags)
-        assert src_tu is not None
-        ret.append(
-            GenUnit(src_tu, entry["inputs"],
-                    GenUnit.Options(output=entry["output"],
-                                    decl_fn_name=entry["decl_fn_name"],
-                                    root_module_namespace=entry["root_module_namespace"]),
-                    visibility_hidden=("-fvisibility=hidden" in " ".join(cxx_flags))))
+    for io_cfg in cfg["io_configs"]:
+        cxx_flags = common_flags + io_cfg["extra_cxx_flags"]
+        tu, _ = load_tu(io_cfg["inputs"], cxx_flags)
+        assert tu is not None
+        ret.append(GenUnit(tu, io_cfg, cxx_flags))
     return ret

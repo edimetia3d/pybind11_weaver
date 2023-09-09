@@ -78,7 +78,7 @@ class EntityTree:
                 continue
             if not gu.is_visible(cursor):
                 continue
-            new_entity = create_entity(cursor)
+            new_entity = create_entity(gu, cursor)
             if new_entity is not None:
                 self.nest_update_parent(new_entity)
 
