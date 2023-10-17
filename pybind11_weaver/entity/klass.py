@@ -1,11 +1,10 @@
 from typing import List, Dict
+import logging
 
 from clang import cindex
 
 from . import entity_base
 from pybind11_weaver.utils import fn
-
-import logging
 
 from pybind11_weaver import gen_unit
 
@@ -74,16 +73,23 @@ class ClassEntity(entity_base.Entity):
         codes = []
 
         def is_pubic(cursor):
-            return cursor.access_specifier == cindex.AccessSpecifier.PUBLIC and self.gu.is_visible(cursor)
+            return cursor.access_specifier == cindex.AccessSpecifier.PUBLIC and not cursor.is_deleted_method()
+
+        def not_operator(cursor):
+            is_operator = "operator" in cursor.spelling
+            if is_operator:
+                _logger.warning(f"Operator overloading not supported `{cursor.spelling}`")
+            return not is_operator
 
         # generate constructor binding
         ctor_found = False
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CONSTRUCTOR and is_pubic(cursor):
+            if cursor.kind == cindex.CursorKind.CONSTRUCTOR:
                 ctor_found = True
-                param_types = fn.fn_arg_type(cursor)
-                codes.append(
-                    f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
+                if is_pubic(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
+                    param_types = fn.fn_arg_type(cursor)
+                    codes.append(
+                        f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
         if not ctor_found:
             codes.append(f"{pybind11_obj_sym}.def(pybind11::init<>());")
         if self.gu.io_config.gen_docstring:
@@ -93,7 +99,7 @@ class ClassEntity(entity_base.Entity):
         # generate method binding
         methods: Dict[str, MethodCoder] = dict()
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXX_METHOD and is_pubic(cursor):
+            if cursor.kind == cindex.CursorKind.CXX_METHOD and is_pubic(cursor) and not_operator(cursor):
                 if not cursor.spelling in methods:
                     methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name(),
                                                            self.gu.io_config.gen_docstring)
@@ -118,9 +124,14 @@ void Pybind11WeaverBindAllMethods(Pybind11T & obj){{
 
         # generate field binding
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.FIELD_DECL and is_pubic(cursor):
+            if cursor.kind == cindex.CursorKind.FIELD_DECL and \
+                    is_pubic(cursor) and \
+                    cursor.type.kind != cindex.TypeKind.CONSTANTARRAY:
+                filed_binder = "def_readwrite"
+                if cursor.type.is_const_qualified():
+                    filed_binder = "def_readonly"
                 codes.append(
-                    f"{pybind11_obj_sym}.def_readwrite(\"{cursor.spelling}\",&{self.qualified_name()}::{cursor.spelling});")
+                    f"{pybind11_obj_sym}.{filed_binder}(\"{cursor.spelling}\",&{self.qualified_name()}::{cursor.spelling});")
                 if self.gu.io_config.gen_docstring:
                     codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
 

@@ -8,11 +8,13 @@ from pybind11_weaver.entity import create_entity
 from pybind11_weaver.entity import entity_base
 from pybind11_weaver.entity import funktion, klass
 
+from pybind11_weaver.utils import common
+
 
 class _DummyNode(entity_base.Entity):
 
-    def __init__(self, cursor: cindex.Cursor):
-        entity_base.Entity.__init__(self, cursor)
+    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
+        entity_base.Entity.__init__(self, gu, cursor)
 
     def transfer(self, new_entity: "Entity"):
         # update parent
@@ -51,7 +53,7 @@ class EntityTree:
         outer = self.entities
         for name in scopes:
             if name not in outer:
-                outer[name] = _DummyNode(None)
+                outer[name] = _DummyNode(entity.gu, None)
                 if not outer is self.entities:
                     outer[name].update_parent(outer)
             outer = outer[name]
@@ -62,9 +64,9 @@ class EntityTree:
             if isinstance(outer[entity_name], _DummyNode):
                 outer[entity_name].transfer(entity)
             else:
-                assert isinstance(entity, funktion.FunctionEntity)
-                assert isinstance(outer[entity_name], funktion.FunctionEntity)
-                outer[entity_name].overloads.append(entity.cursor)
+                if isinstance(entity, funktion.FunctionEntity):
+                    assert isinstance(outer[entity_name], funktion.FunctionEntity)
+                    outer[entity_name].overloads.append(entity.cursor)
         else:
             outer[entity_name] = entity
         if not outer is self.entities:
@@ -75,8 +77,6 @@ class EntityTree:
         valid_file_tail_names = gu.src_file_tail_names()
         for cursor in root_cursor.walk_preorder():
             if not self.check_valid_cursor(cursor, valid_file_tail_names):
-                continue
-            if not gu.is_visible(cursor):
                 continue
             new_entity = create_entity(gu, cursor)
             if new_entity is not None:

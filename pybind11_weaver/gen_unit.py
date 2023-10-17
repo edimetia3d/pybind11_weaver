@@ -116,20 +116,6 @@ class GenUnit:
         self.src_files: List[str] = io_config["inputs"]
         self.io_config = GenUnit.IOConifg(io_config)
         self.cxx_flags = cxx_flags
-        self.fvisibility_hidden = ("-fvisibility=hidden" in " ".join(cxx_flags))
-
-    def is_visible(self, cursor: cindex.Cursor):
-        """Utility method to check if a cursor is visible in the current translation unit."""
-        if cursor.kind in [cindex.CursorKind.ENUM_DECL, cindex.CursorKind.NAMESPACE]:
-            return True
-        visible = not self.fvisibility_hidden
-        for c in cursor.get_children():
-            if c.kind == cindex.CursorKind.VISIBILITY_ATTR:
-                if c.spelling == "default":
-                    visible = True
-                elif c.spelling == "hidden":
-                    visible = False
-        return visible
 
     def src_file_tail_names(self):
         files = []

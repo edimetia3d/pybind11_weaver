@@ -1,3 +1,5 @@
+import logging
+
 from . import entity_base
 from . import enum
 from . import klass
@@ -6,9 +8,17 @@ from . import funktion
 
 from clang import cindex
 
+from pybind11_weaver import gen_unit
+
+_logger = logging.getLogger(__name__)
 _KIND = cindex.CursorKind
 
-from pybind11_weaver import gen_unit
+
+def _is_specialization(cursor: cindex.Cursor):
+    if "<" in cursor.displayname and ">" in cursor.displayname:
+        _logger.warning(f"Specialized template not supported `{cursor.canonical.displayname}` ")
+        return True
+    return False
 
 
 def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
@@ -26,9 +36,9 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
         return enum.EnumEntity(gu, cursor)
     if kind == _KIND.NAMESPACE:
         return namespace.NamespaceEntity(gu, cursor)
-    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL] and cursor.is_definition():
+    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL] and cursor.is_definition() and not _is_specialization(cursor):
         return klass.ClassEntity(gu, cursor)
-    if kind == _KIND.FUNCTION_DECL:
+    if kind == _KIND.FUNCTION_DECL and not _is_specialization(cursor):
         return funktion.FunctionEntity(gu, cursor)
 
     return None

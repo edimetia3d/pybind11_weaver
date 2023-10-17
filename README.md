@@ -16,6 +16,7 @@ This tool takes a [sample.h](https://github.com/edimetia3d/pybind11_weaver/blob/
 - [x] Namespace hierarchy to Python submodules
 - [x] Enum
 - [x] Function, function overload
+- [ ] Operation overloading
 - [x] Class method, method overloading, static method, static method overloading, constructor, constructor overloading
 - [x] Class field
 - [x] Class access control
@@ -23,6 +24,7 @@ This tool takes a [sample.h](https://github.com/edimetia3d/pybind11_weaver/blob/
 - [ ] Trampoline class for virtual function
 - [x] Support working with hand-written code
 - [ ] Auto snake case
+- [ ] Binding for Template specialization
 
 ## Background & Recommendations
 

@@ -18,6 +18,9 @@ def parse_args():
     if hasattr(args, "get_include") and args.get_include:
         print(pybind11_weaver.get_include())
         exit(0)
+    if args.config is None:
+        parser.print_help()
+        exit(0)
     return args
 
 
