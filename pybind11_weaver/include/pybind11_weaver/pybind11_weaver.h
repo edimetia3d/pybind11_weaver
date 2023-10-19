@@ -7,6 +7,23 @@
 
 namespace pybind11_weaver {
 
+template <class T> struct PointerWrapper {
+  static_assert(std::is_pointer<T>::value, "T must be a pointer type");
+  T ptr;
+  PointerWrapper(T ptr) : ptr(ptr) {}
+  operator T() { return ptr; }
+  static void FastBind(pybind11::module &m, const std::string &name) {
+    pybind11::class_<PointerWrapper> handle(m, name.c_str());
+    handle.def("get_ptr", [](PointerWrapper &self) {
+      return reinterpret_cast<intptr_t>(self.ptr);
+    });
+    handle.def("set_ptr", [](PointerWrapper &self, intptr_t ptr) {
+      self.ptr = reinterpret_cast<T>(ptr);
+    });
+  }
+};
+
+
 class CallUpdateGuard {
 public:
   using Fn = std::function<void(void)>;

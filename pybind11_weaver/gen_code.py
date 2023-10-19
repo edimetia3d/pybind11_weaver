@@ -5,9 +5,10 @@ import shutil
 from .entity import entity_base
 from . import entity_tree
 from . import gen_unit
+from .utils import fn
 
 entity_template = """
-
+#ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
 template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
   using Pybind11Type = Pybind11T;
 
@@ -45,6 +46,7 @@ struct {entity_struct_name} : public {bind_struct_name}<std::decay_t<{handle_typ
   {handle_type} handle;
     
 }};
+#endif // PB11_WEAVER_DISABLE_{entity_struct_name}
 """
 
 file_template = """
@@ -67,6 +69,8 @@ using pybind11_weaver::EntityBase;
 * If the returned guard is not called, the guard will call the update function on its destruction.
 **/
 [[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::CustomBindingRegistry & registry){{
+{create_warped_pointer_bindings}
+
 {create_entity_var_stmts}
 
     auto update_fn = [=](){{
@@ -147,6 +151,7 @@ def gen_code(config_file: str):
             pybind11_weaver_header=pybind11_weaver_header,
             decl_fn_name=gu.io_config.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
+            create_warped_pointer_bindings=gen_wrapped_pointer_code(),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
             update_entity_var_stmts="\n".join(update_entity_var_stmts),
         )
@@ -156,3 +161,19 @@ def gen_code(config_file: str):
         # format file if clang-format found
         if shutil.which("clang-format") is not None:
             os.system(f"clang-format -i {gu.io_config.output} --style=LLVM")
+
+
+def gen_wrapped_pointer_code():
+    wrapped_types = fn.get_wrapped_types()
+    create_warped_pointer_bindings = []
+    for type in sorted(wrapped_types):
+        wrapped_type_binding_code_template = "pybind11_weaver::PointerWrapper<{type}>::FastBind(m,\"{safe_type_name}\");"
+        safe_type_name = type.replace(" ", "")
+        safe_type_name = safe_type_name.replace(",", "_")
+        safe_type_name = safe_type_name.replace("*", "p")
+        safe_type_name = safe_type_name.replace("(", "6")
+        safe_type_name = safe_type_name.replace(")", "9")
+        create_warped_pointer_bindings.append(
+            wrapped_type_binding_code_template.format(type=type, safe_type_name=safe_type_name))
+    create_warped_pointer_bindings = "\n".join(create_warped_pointer_bindings)
+    return create_warped_pointer_bindings

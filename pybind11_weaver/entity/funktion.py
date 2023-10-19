@@ -26,9 +26,8 @@ class FunctionEntity(entity_base.Entity):
         code = []
         targets = [self.cursor] + self.overloads
         for t in targets:
-            fn_pointer_type = fn.get_fn_pointer_type(t)
             code.append(
-                f"{pybind11_obj_sym}.def(\"{self.name}\",static_cast<{fn_pointer_type}>(&{self.qualified_name()}));")
+                f"{pybind11_obj_sym}.def(\"{self.name}\",{fn.get_fn_value_expr(t)});")
             if self.gu.io_config.gen_docstring:
                 code[-1] = entity_base._inject_docstring(code[-1], t, "last_arg")
         return code

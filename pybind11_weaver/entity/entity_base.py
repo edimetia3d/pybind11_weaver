@@ -13,10 +13,10 @@ def _inject_docstring(code: str, cursor: cindex.Cursor, insert_mode: str):
     if not cursor.raw_comment:
         return code
     if insert_mode == "append":
-        code += f',R"({cursor.raw_comment})"'
+        code += f',R"_pb11_weaver({cursor.raw_comment})_pb11_weaver"'
     if insert_mode == "last_arg":
         pos = code.rfind(")")
-        code = code[:pos] + f',R"({cursor.raw_comment})"' + code[pos:]
+        code = code[:pos] + f',R"_pb11_weaver({cursor.raw_comment})_pb11_weaver"' + code[pos:]
     return code
 
 

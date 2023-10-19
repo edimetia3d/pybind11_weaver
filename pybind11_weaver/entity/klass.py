@@ -36,9 +36,8 @@ virtual void BindMethod_{self.fn_name}(Pybind11T & obj){{{{
             return cursor.is_static_method()
 
         # to support overload, we will cast member function to function pointer
-        pointer = f"&{scope_full_name}::{cursor.spelling}"
-        method_pointer_type = fn.get_fn_pointer_type(cursor)
-        casted_pointer = f"static_cast<{method_pointer_type}>({pointer})"
+
+        casted_pointer = fn.get_fn_value_expr(cursor)
         if is_static(cursor):
             self.body.append(
                 f"obj.def_static(\"{cursor.spelling}\",{casted_pointer});")
@@ -51,6 +50,15 @@ virtual void BindMethod_{self.fn_name}(Pybind11T & obj){{{{
         if self.inect_docstring:
             self.body[-1] = entity_base._inject_docstring(
                 self.body[-1], cursor, "last_arg")
+
+
+def _is_bindable_type(type: cindex.Type):
+    type = type.get_canonical()
+    if type.kind in [cindex.TypeKind.CONSTANTARRAY, cindex.TypeKind.INCOMPLETEARRAY, cindex.TypeKind.VARIABLEARRAY]:
+        return False
+    if fn.warp_type(type, "")[0] is not None:
+        return False
+    return True
 
 
 class ClassEntity(entity_base.Entity):
@@ -126,7 +134,7 @@ void Pybind11WeaverBindAllMethods(Pybind11T & obj){{
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.FIELD_DECL and \
                     is_pubic(cursor) and \
-                    cursor.type.kind != cindex.TypeKind.CONSTANTARRAY:
+                    _is_bindable_type(cursor.type):
                 filed_binder = "def_readwrite"
                 if cursor.type.is_const_qualified():
                     filed_binder = "def_readonly"
