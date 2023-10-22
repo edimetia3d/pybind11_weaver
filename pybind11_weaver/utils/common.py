@@ -1,7 +1,6 @@
-from clang import cindex
+from pylibclang import cindex
+import pylibclang._C
 
 
 def is_visible(cursor: cindex.Cursor):
-    if cursor.kind not in [cindex.CursorKind.FUNCTION_DECL, cindex.CursorKind.CXX_METHOD]:
-        return True  # only control visibility of function and method
-    return cursor.linkage == cindex.LinkageKind.EXTERNAL
+    return pylibclang._C.clang_getCursorVisibility(cursor) == cindex._C.CXVisibilityKind.CXVisibility_Default

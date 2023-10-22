@@ -29,6 +29,7 @@ ARGS = parse_args()
 
 def main():
     gen_code.gen_code(ARGS.config)
+    print("Done!")
 
 
 if __name__ == "__main__":

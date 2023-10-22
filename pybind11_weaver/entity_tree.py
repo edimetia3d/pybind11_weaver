@@ -1,7 +1,7 @@
 from typing import List, Dict
 import weakref
 
-from clang import cindex
+from pylibclang import cindex
 
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
@@ -92,4 +92,4 @@ class EntityTree:
             if cursor_filename.endswith(tail):
                 in_src = True
                 break
-        return in_src and cursor.linkage == cindex.LinkageKind.EXTERNAL
+        return in_src and cursor.linkage == cindex.LinkageKind.CXLinkage_External and common.is_visible(cursor)

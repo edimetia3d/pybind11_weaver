@@ -3,7 +3,7 @@ import functools
 import weakref
 from typing import List, Dict
 
-from clang import cindex
+from pylibclang import cindex
 
 from pybind11_weaver import gen_unit
 from pybind11_weaver.utils import scope_list

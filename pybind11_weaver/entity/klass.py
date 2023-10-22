@@ -1,10 +1,10 @@
 from typing import List, Dict
 import logging
 
-from clang import cindex
+from pylibclang import cindex
 
 from . import entity_base
-from pybind11_weaver.utils import fn
+from pybind11_weaver.utils import fn, common
 
 from pybind11_weaver import gen_unit
 
@@ -54,9 +54,10 @@ virtual void BindMethod_{self.fn_name}(Pybind11T & obj){{{{
 
 def _is_bindable_type(type: cindex.Type):
     type = type.get_canonical()
-    if type.kind in [cindex.TypeKind.CONSTANTARRAY, cindex.TypeKind.INCOMPLETEARRAY, cindex.TypeKind.VARIABLEARRAY]:
+    if type.kind in [cindex.TypeKind.CXType_ConstantArray, cindex.TypeKind.CXType_IncompleteArray,
+                     cindex.TypeKind.CXType_VariableArray]:
         return False
-    if fn.warp_type(type, "")[0] is not None:
+    if fn.get_cpp_type(type)[0] != type.spelling:
         return False
     return True
 
@@ -65,14 +66,14 @@ class ClassEntity(entity_base.Entity):
 
     def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
         entity_base.Entity.__init__(self, gu, cursor)
-        assert cursor.kind in [cindex.CursorKind.CLASS_DECL, cindex.CursorKind.STRUCT_DECL]
+        assert cursor.kind in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]
         self.extra_methods_codes = []
 
     def get_cpp_struct_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
 
     def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
-        code = f'{parent_scope_sym},"{self.name}"'
+        code = f'{parent_scope_sym},"{self.name}", pybind11::dynamic_attr()'
         if self.gu.io_config.gen_docstring:
             code = entity_base._inject_docstring(code, self.cursor, "append")
         return code
@@ -81,7 +82,8 @@ class ClassEntity(entity_base.Entity):
         codes = []
 
         def is_pubic(cursor):
-            return cursor.access_specifier == cindex.AccessSpecifier.PUBLIC and not cursor.is_deleted_method()
+            return cursor.access_specifier == cindex.AccessSpecifier.CX_CXXPublic and not cursor.is_deleted_method() and common.is_visible(
+                cursor)
 
         def not_operator(cursor):
             is_operator = "operator" in cursor.spelling
@@ -92,7 +94,7 @@ class ClassEntity(entity_base.Entity):
         # generate constructor binding
         ctor_found = False
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CONSTRUCTOR:
+            if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
                 ctor_found = True
                 if is_pubic(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
                     param_types = fn.fn_arg_type(cursor)
@@ -107,7 +109,7 @@ class ClassEntity(entity_base.Entity):
         # generate method binding
         methods: Dict[str, MethodCoder] = dict()
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXX_METHOD and is_pubic(cursor) and not_operator(cursor):
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and is_pubic(cursor) and not_operator(cursor):
                 if not cursor.spelling in methods:
                     methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name(),
                                                            self.gu.io_config.gen_docstring)
@@ -132,7 +134,7 @@ void Pybind11WeaverBindAllMethods(Pybind11T & obj){{
 
         # generate field binding
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.FIELD_DECL and \
+            if cursor.kind == cindex.CursorKind.CXCursor_FieldDecl and \
                     is_pubic(cursor) and \
                     _is_bindable_type(cursor.type):
                 filed_binder = "def_readwrite"

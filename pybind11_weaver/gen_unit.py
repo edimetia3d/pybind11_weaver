@@ -11,7 +11,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 import pybind11
 import yaml
-from clang import cindex
+from pylibclang import cindex
 
 import pybind11_weaver.third_party.ccsyspath as ccsyspath
 

@@ -1,9 +1,14 @@
 #ifndef GITHUB_COM_PYBIND11_WEAVER
 #define GITHUB_COM_PYBIND11_WEAVER
+#include <atomic>
 #include <functional>
 #include <map>
+#include <mutex>
+#include <utility>
 
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace pybind11_weaver {
 
@@ -11,18 +16,71 @@ template <class T> struct PointerWrapper {
   static_assert(std::is_pointer<T>::value, "T must be a pointer type");
   T ptr;
   PointerWrapper(T ptr) : ptr(ptr) {}
+  PointerWrapper(intptr_t ptr_v) : ptr(reinterpret_cast<T>(ptr_v)) {}
   operator T() { return ptr; }
   static void FastBind(pybind11::module &m, const std::string &name) {
-    pybind11::class_<PointerWrapper> handle(m, name.c_str());
+    pybind11::class_<PointerWrapper> handle(m, name.c_str(),
+                                            pybind11::dynamic_attr());
+    handle.def(pybind11::init<intptr_t>());
     handle.def("get_ptr", [](PointerWrapper &self) {
       return reinterpret_cast<intptr_t>(self.ptr);
     });
     handle.def("set_ptr", [](PointerWrapper &self, intptr_t ptr) {
       self.ptr = reinterpret_cast<T>(ptr);
     });
+    handle.def_static("from_capsule", [](pybind11::capsule o) {
+      return new PointerWrapper<T>(reinterpret_cast<T>(o.get_pointer()));
+    });
+  }
+};
+template <class T> using WrappedPtrT = std::unique_ptr<PointerWrapper<T>>;
+
+template <class T> WrappedPtrT<T> WrapP(T ptr) {
+  if (!ptr) {
+    return nullptr;
+  }
+  return WrappedPtrT<T>{new PointerWrapper<T>(ptr)};
+}
+
+struct Guardian {
+  std::vector<std::function<void()>> dtor_callbacks;
+  ~Guardian() {
+    for (auto &fn : dtor_callbacks) {
+      fn();
+    }
   }
 };
 
+template <typename R, typename... Args> struct FnPointerWrapper {
+  using CppFnT = R(Args...);
+
+  template <class CR, typename... CArgs> struct GetCptr {
+    using CFnPtrT = CR (*)(CArgs...);
+    using CFnT = CR(CArgs...);
+    static CFnPtrT Run(std::function<CppFnT> to_call, Guardian &&guard,
+                       CFnPtrT c_wrapper, int64_t uuid) {
+      // lock
+      GetMutex(uuid).lock();
+      guard.dtor_callbacks.push_back([uuid]() {
+        FnMap().erase(uuid);
+        GetMutex(uuid).unlock();
+      });
+      FnProxy(uuid) = to_call;
+      return c_wrapper;
+    }
+  };
+
+  static std::mutex &GetMutex(int64_t uuid) {
+    static std::map<int64_t, std::mutex> mtx;
+    return mtx[uuid];
+  };
+
+  static std::function<CppFnT> &FnProxy(int64_t uuid) { return FnMap()[uuid]; }
+  static std::map<int64_t, std::function<CppFnT>> &FnMap() {
+    static std::map<int64_t, std::function<CppFnT>> fns;
+    return fns;
+  }
+};
 
 class CallUpdateGuard {
 public:

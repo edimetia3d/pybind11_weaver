@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Software Development :: Compilers"
 ]
 dependencies = [
-    "libclang",
+    "pylibclang",
     "PyYAML",
     "pybind11",
 ]

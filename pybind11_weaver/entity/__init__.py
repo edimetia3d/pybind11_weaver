@@ -6,7 +6,7 @@ from . import klass
 from . import namespace
 from . import funktion
 
-from clang import cindex
+from pylibclang import cindex
 
 from pybind11_weaver import gen_unit
 
@@ -32,13 +32,14 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     """
     kind = cursor.kind
 
-    if kind == _KIND.ENUM_DECL:
+    if kind == _KIND.CXCursor_EnumDecl:
         return enum.EnumEntity(gu, cursor)
-    if kind == _KIND.NAMESPACE:
+    if kind == _KIND.CXCursor_Namespace:
         return namespace.NamespaceEntity(gu, cursor)
-    if kind in [_KIND.CLASS_DECL, _KIND.STRUCT_DECL] and cursor.is_definition() and not _is_specialization(cursor):
+    if kind in [_KIND.CXCursor_ClassDecl,
+                _KIND.CXCursor_StructDecl] and cursor.is_definition() and not _is_specialization(cursor):
         return klass.ClassEntity(gu, cursor)
-    if kind == _KIND.FUNCTION_DECL and not _is_specialization(cursor):
+    if kind == _KIND.CXCursor_FunctionDecl and not _is_specialization(cursor):
         return funktion.FunctionEntity(gu, cursor)
 
     return None
