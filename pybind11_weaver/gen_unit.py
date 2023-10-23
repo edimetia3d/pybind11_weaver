@@ -8,6 +8,7 @@ import datetime
 import os.path
 import sysconfig
 from typing import List, Tuple, Optional, Dict, Any
+from glob import glob
 
 import pybind11
 import yaml
@@ -62,6 +63,7 @@ def cleanup_config(cfg):
             "gen_docstring": True,
             "strict_visibility_mode": False,
         })
+        entry["inputs"] = _clean_paths(entry["inputs"])
     return cfg
 
 
@@ -76,14 +78,21 @@ def load_config(file_or_content: str):
     return cleanup_config(cfg)
 
 
-def _file_paths_to_include(file_list: List[str]) -> List[str]:
+def _clean_paths(file_list: List[str]) -> List[str]:
     files_cleand = []
     for f in file_list:
         if f.startswith('"') or f.startswith("<"):
             files_cleand.append(f)
+        elif "glob" in f:
+            glob_list = eval(f)
+            files_cleand.extend(_clean_paths(glob_list))
         else:
             files_cleand.append(f'"{f}"')
-    return ["#include " + path for path in files_cleand]
+    return files_cleand
+
+
+def _file_paths_to_include(file_list: List[str]) -> List[str]:
+    return ["#include " + path for path in file_list]
 
 
 def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "") -> Tuple[

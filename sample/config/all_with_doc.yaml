@@ -4,7 +4,7 @@ common_config:
   include_directories: [ "/path/to/foo","/path/to/bar" ] # A list of extra include path, these paths will be converted to `-I` flags
 # A list of dict that specifies files that needed to be generated
 io_configs:
-  - inputs: [ "a.h","<bar.h>" ] # a list of path of header files, these files should be able to find by C++ `#include` directive.
+  - inputs: [ "a.h","<bar.h>" ,"glob('${CFG_DIR}/**/*.h', recursive = True)" ] # a list of path of header files, these files should be able to find by C++ `#include` directive. A pyton expression of `glob(...)` is also supported, it will be executed by python's `glob.glob` function.
     output: "/path/to/output" # Path to output file's base name, a file "/path/to/output" will be generated. If the file has already created, the generated content will be appended to them.
     decl_fn_name: "DeclFn" # The name of the function that will be used to declare the entities, default is "DeclFn".
     extra_cxx_flags: [ ] # these flags will be used only for this file
