@@ -200,7 +200,7 @@ __COUNTER__ - 1
 def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
-        cls_name = cursor.semantic_parent.spelling
+        cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
     wrapper = wrap_c_function_to_cpp(cursor.spelling,
                                      cursor.result_type,
                                      [arg.type for arg in cursor.get_arguments()],

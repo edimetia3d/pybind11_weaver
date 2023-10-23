@@ -60,6 +60,7 @@ def cleanup_config(cfg):
             "root_module_namespace": "",
             "extra_cxx_flags": [],
             "gen_docstring": True,
+            "strict_visibility_mode": False,
         })
     return cfg
 

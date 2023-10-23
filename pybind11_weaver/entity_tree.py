@@ -76,13 +76,13 @@ class EntityTree:
         root_cursor = gu.tu.cursor
         valid_file_tail_names = gu.src_file_tail_names()
         for cursor in root_cursor.walk_preorder():
-            if not self.check_valid_cursor(cursor, valid_file_tail_names):
+            if not self.check_valid_cursor(cursor, valid_file_tail_names, gu.io_config.strict_visibility_mode):
                 continue
             new_entity = create_entity(gu, cursor)
             if new_entity is not None:
                 self.nest_update_parent(new_entity)
 
-    def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str]):
+    def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str], strict_visibility_mode: bool):
         file = cursor.location.file
         if file is None:
             return False
@@ -92,4 +92,5 @@ class EntityTree:
             if cursor_filename.endswith(tail):
                 in_src = True
                 break
-        return in_src and cursor.linkage == cindex.LinkageKind.CXLinkage_External and common.is_visible(cursor)
+        return in_src and cursor.linkage == cindex.LinkageKind.CXLinkage_External and common.is_visible(cursor,
+                                                                                                        strict_visibility_mode)

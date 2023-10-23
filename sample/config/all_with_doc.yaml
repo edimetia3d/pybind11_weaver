@@ -5,10 +5,10 @@ common_config:
 # A list of dict that specifies files that needed to be generated
 io_configs:
   - inputs: [ "a.h","<bar.h>" ] # a list of path of header files, these files should be able to find by C++ `#include` directive.
-    existing_defs: [ "a.h","b.cpp" ] # a list of path to pybind11-code files, the entities bind in these files will be ignored, e.g `py::class_<MyType>` will make generator ignore generation for `MyType`
     output: "/path/to/output" # Path to output file's base name, a file "/path/to/output" will be generated. If the file has already created, the generated content will be appended to them.
     decl_fn_name: "DeclFn" # The name of the function that will be used to declare the entities, default is "DeclFn".
     extra_cxx_flags: [ ] # these flags will be used only for this file
     root_module_namespace: "" # by default, the global name space will map to python's root module, user could use this arg to specify the namespace that will be used as root module.
     gen_docstring: true # whether to generate docstring for the generated python code
+    strict_visibility_mode: false # Only check visibility on functions and methods. default is false.
 

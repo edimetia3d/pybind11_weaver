@@ -83,7 +83,7 @@ class ClassEntity(entity_base.Entity):
 
         def is_pubic(cursor):
             return cursor.access_specifier == cindex.AccessSpecifier.CX_CXXPublic and not cursor.is_deleted_method() and common.is_visible(
-                cursor)
+                cursor, self.gu.io_config.strict_visibility_mode)
 
         def not_operator(cursor):
             is_operator = "operator" in cursor.spelling
