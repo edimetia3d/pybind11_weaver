@@ -69,6 +69,7 @@ using pybind11_weaver::EntityBase;
 * If the returned guard is not called, the guard will call the update function on its destruction.
 **/
 [[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::CustomBindingRegistry & registry){{
+pybind11_weaver::_PointerWrapperBase::FastBind(m);
 {create_warped_pointer_bindings}
 
 {create_entity_var_stmts}

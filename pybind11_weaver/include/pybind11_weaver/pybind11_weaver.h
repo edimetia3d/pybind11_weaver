@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <mutex>
+#include <thread>
 #include <utility>
 
 #include <pybind11/functional.h>
@@ -12,28 +13,39 @@
 
 namespace pybind11_weaver {
 
-template <class T> struct PointerWrapper {
-  static_assert(std::is_pointer<T>::value, "T must be a pointer type");
-  T ptr;
-  PointerWrapper(T ptr) : ptr(ptr) {}
-  PointerWrapper(intptr_t ptr_v) : ptr(reinterpret_cast<T>(ptr_v)) {}
-  operator T() { return ptr; }
-  static void FastBind(pybind11::module &m, const std::string &name) {
-    pybind11::class_<PointerWrapper> handle(m, name.c_str(),
-                                            pybind11::dynamic_attr());
-    handle.def(pybind11::init<intptr_t>());
-    handle.def("get_ptr", [](PointerWrapper &self) {
-      return reinterpret_cast<intptr_t>(self.ptr);
-    });
-    handle.def("set_ptr", [](PointerWrapper &self, intptr_t ptr) {
-      self.ptr = reinterpret_cast<T>(ptr);
-    });
-    handle.def_static("from_capsule", [](pybind11::capsule o) {
-      return new PointerWrapper<T>(reinterpret_cast<T>(o.get_pointer()));
-    });
+struct _PointerWrapperBase {
+  _PointerWrapperBase(void *ptr_) : ptr(ptr_) {}
+  _PointerWrapperBase(intptr_t ptr_v) : ptr(reinterpret_cast<void *>(ptr_v)) {}
+  intptr_t get_ptr() { return reinterpret_cast<intptr_t>(ptr); }
+  void set_ptr(intptr_t ptr_v) { ptr = reinterpret_cast<void *>(ptr_v); }
+  static void FastBind(pybind11::module &m) {
+    pybind11::class_<_PointerWrapperBase, std::shared_ptr<_PointerWrapperBase>>(
+        m, "_PointerWrapperBase", pybind11::dynamic_attr())
+        .def(pybind11::init<void *>())
+        .def(pybind11::init<intptr_t>())
+        .def("get_ptr", &_PointerWrapperBase::get_ptr)
+        .def("set_ptr", &_PointerWrapperBase::set_ptr);
   }
+  void *ptr;
 };
-template <class T> using WrappedPtrT = std::unique_ptr<PointerWrapper<T>>;
+
+template <class T> struct PointerWrapper : public _PointerWrapperBase {
+  static_assert(std::is_pointer<T>::value, "T must be a pointer type");
+  using _PointerWrapperBase::_PointerWrapperBase;
+
+  static void FastBind(pybind11::module &m, const std::string &name) {
+    pybind11::class_<PointerWrapper, std::shared_ptr<PointerWrapper>,
+                     _PointerWrapperBase>(m, name.c_str(),
+                                          pybind11::dynamic_attr())
+        .def(pybind11::init<intptr_t>())
+        .def_static("from_capsule", [](pybind11::capsule o) {
+          return std::make_shared<PointerWrapper<T>>(
+              reinterpret_cast<void *>(o.get_pointer()));
+        });
+  }
+  T Cptr() { return reinterpret_cast<T>(ptr); }
+};
+template <class T> using WrappedPtrT = std::shared_ptr<PointerWrapper<T>>;
 
 template <class T> WrappedPtrT<T> WrapP(T ptr) {
   if (!ptr) {
@@ -56,29 +68,49 @@ template <typename R, typename... Args> struct FnPointerWrapper {
 
   template <class CR, typename... CArgs> struct GetCptr {
     using CFnPtrT = CR (*)(CArgs...);
-    using CFnT = CR(CArgs...);
     static CFnPtrT Run(std::function<CppFnT> to_call, Guardian &&guard,
-                       CFnPtrT c_wrapper, int64_t uuid) {
+                       CFnPtrT c_wrapper, const char *uuid0, int64_t uuid1) {
       // lock
-      GetMutex(uuid).lock();
-      guard.dtor_callbacks.push_back([uuid]() {
-        FnMap().erase(uuid);
-        GetMutex(uuid).unlock();
-      });
-      FnProxy(uuid) = to_call;
+      guard.dtor_callbacks.push_back(
+          [uuid0, uuid1]() { ReleaseFnProxy(uuid0, uuid1); });
+      SetFnProxy(uuid0, uuid1, to_call);
       return c_wrapper;
     }
   };
 
-  static std::mutex &GetMutex(int64_t uuid) {
-    static std::map<int64_t, std::mutex> mtx;
-    return mtx[uuid];
-  };
+  using FnMapT =
+      std::map<const char *, std::map<int64_t, std::function<CppFnT>>>;
+  static void SetFnProxy(const char *uuid0, int64_t uuid1,
+                         std::function<CppFnT> &fn) {
+    FnMapMutex().lock();
+    while (FnMap()[uuid0].count(uuid1) != 0) {
+      // The chance is so low, spin lock should be fine
+      FnMapMutex().unlock();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      FnMapMutex().lock();
+    }
+    FnMap()[uuid0][uuid1] = fn;
+    FnMapMutex().unlock();
+  }
 
-  static std::function<CppFnT> &FnProxy(int64_t uuid) { return FnMap()[uuid]; }
-  static std::map<int64_t, std::function<CppFnT>> &FnMap() {
-    static std::map<int64_t, std::function<CppFnT>> fns;
+  static std::function<CppFnT> GetFnProxy(const char *uuid0, int64_t uuid1) {
+    std::lock_guard<std::mutex> _(FnMapMutex());
+    auto ret = FnMap()[uuid0][uuid1];
+    return ret;
+  }
+
+  static void ReleaseFnProxy(const char *uuid0, int64_t uuid1) {
+    std::lock_guard<std::mutex> _(FnMapMutex());
+    FnMap()[uuid0].erase(uuid1);
+  }
+  static FnMapT &FnMap() {
+    static FnMapT fns;
     return fns;
+  }
+
+  static std::mutex &FnMapMutex() {
+    static std::mutex m;
+    return m;
   }
 };
 

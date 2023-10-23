@@ -53,10 +53,7 @@ class CPointerToWrapped(ValueCast):
         _wrapped_db.add(self.c_type.spelling)
 
     def cvt(self, c_expr: str, **kwargs):
-        if "move_out" in kwargs and kwargs["move_out"]:
-            return f"pybind11_weaver::WrapP<{self.c_type.spelling}>({c_expr}).release()"
-        else:
-            return f"pybind11_weaver::WrapP<{self.c_type.spelling}>({c_expr}).get()"
+        return f"pybind11_weaver::WrapP<{self.c_type.spelling}>({c_expr})"
 
 
 class WrappedToCPointer(ValueCast):
@@ -65,7 +62,7 @@ class WrappedToCPointer(ValueCast):
         _wrapped_db.add(self.c_type.spelling)
 
     def cvt(self, cpp_expr: str, **kwargs):
-        return f"({cpp_expr})->ptr"
+        return f"({cpp_expr})->Cptr()"
 
 
 class CFnPointerToCppStdFn(ValueCast):
@@ -93,7 +90,7 @@ def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValu
     if c_type.kind == cindex.TypeKind.CXType_Pointer:
         pointee = c_type.get_pointee().get_canonical()
         if pointee.kind in [cindex.TypeKind.CXType_Pointer, cindex.TypeKind.CXType_Void]:
-            cpp_type = f"pybind11_weaver::PointerWrapper<{c_type.spelling}> *"
+            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
             return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
         if pointee.kind in [cindex.TypeKind.CXType_FunctionProto]:
             ret_t, args_t = c_function_sig_to_cpp_function_sig(pointee.get_result(), pointee.argument_types())
@@ -103,13 +100,13 @@ def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValu
         pointee_decl = pointee.get_declaration()
         if pointee_decl.kind in [cindex.CursorKind.CXCursor_StructDecl,
                                  cindex.CursorKind.CXCursor_ClassDecl] and not pointee_decl.is_definition():
-            cpp_type = f"pybind11_weaver::PointerWrapper<{c_type.spelling}> *"
+            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
             return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
 
     return ret
 
 
-__c_function_to_cpp_template = """[=]({params}){{
+__c_function_to_cpp_template = """[]({params}){{
     return {ret_expr};
 }}"""
 
@@ -142,16 +139,15 @@ def wrap_c_function_to_cpp(fn_name: str, ret_t: cindex.Type, args_t: List[cindex
     wrap_ret = False
     if cpp_type != ret_t.get_canonical().spelling:
         wrap_ret = True
-        ret_expr = c_to_cpp(ret_expr, move_out=True)
+        ret_expr = c_to_cpp(ret_expr)
     if wrap_param or wrap_ret or force_warp:
         return __c_function_to_cpp_template.format(params=','.join(new_params), ret_expr=ret_expr)
     else:
         return None
 
 
-__wraped_cpp_fn_uuid = 0
 __cpp_function_to_c_template = """[]({params}){{
-    auto &to_call = pybind11_weaver::FnPointerWrapper<{cpp_type_list}>::FnProxy({uuid});
+    auto to_call = pybind11_weaver::FnPointerWrapper<{cpp_type_list}>::GetFnProxy(__DATE__ __TIME__ __FILE__ , __COUNTER__);
     return {ret_expr};
 }}"""
 
@@ -166,8 +162,6 @@ def wrap_cpp_function_to_c(cpp_callable_name: str,
                            c_ret_t: cindex.Type,
                            c_args_t: List[cindex.Type],
                            c_args_names: List[str]):
-    global __wraped_cpp_fn_uuid
-    __wraped_cpp_fn_uuid += 1
     params = []
     cpp_args = []
     for arg_t, arg_name in zip(c_args_t, c_args_names):
@@ -191,12 +185,16 @@ def wrap_cpp_function_to_c(cpp_callable_name: str,
         params=','.join(params),
         cpp_args=','.join(cpp_args),
         cpp_type_list=cpp_type_list_str,
-        uuid=__wraped_cpp_fn_uuid,
         ret_expr=ret_expr)
 
     fn_wrapper_t = f"pybind11_weaver::FnPointerWrapper<{cpp_type_list_str}>"
     c_fn_sig = f"{','.join([t.get_canonical().spelling for t in [c_ret_t] + c_args_t])}"
-    return f"{fn_wrapper_t}::GetCptr<{c_fn_sig}>::Run({cpp_callable_name}, pybind11_weaver::Guardian() , {c_wrapper}, {__wraped_cpp_fn_uuid})"
+    return f"""{fn_wrapper_t}::GetCptr<{c_fn_sig}>::Run({cpp_callable_name}, pybind11_weaver::Guardian() , {c_wrapper}, 
+/* clang-format off */
+__DATE__ __TIME__ __FILE__, 
+__COUNTER__ - 1
+/* clang-format on */
+)"""
 
 
 def get_fn_value_expr(cursor: cindex.Cursor) -> str:
