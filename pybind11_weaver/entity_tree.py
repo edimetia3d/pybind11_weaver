@@ -13,8 +13,13 @@ from pybind11_weaver.utils import common
 
 class _DummyNode(entity_base.Entity):
 
-    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor):
+    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor, name: str):
         entity_base.Entity.__init__(self, gu, cursor)
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     def transfer(self, new_entity: "Entity"):
         # update parent
@@ -53,9 +58,10 @@ class EntityTree:
         outer = self.entities
         for name in scopes:
             if name not in outer:
-                outer[name] = _DummyNode(entity.gu, None)
+                new_node = _DummyNode(entity.gu, None, name)
+                outer[name] = new_node
                 if not outer is self.entities:
-                    outer[name].update_parent(outer)
+                    new_node.update_parent(outer)
             outer = outer[name]
 
         # setup entity

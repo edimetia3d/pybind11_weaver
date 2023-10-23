@@ -1,5 +1,8 @@
 from pylibclang import cindex
 import pylibclang._C
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def is_visible(cursor: cindex.Cursor, strcit_mode: bool):
@@ -14,3 +17,10 @@ def is_visible(cursor: cindex.Cursor, strcit_mode: bool):
         should_check = cursor.kind in [cindex.CursorKind.CXCursor_Constructor, cindex.CursorKind.CXCursor_CXXMethod,
                                        cindex.CursorKind.CXCursor_FunctionDecl]
         return vis if should_check else True
+
+
+def not_operator(cursor):
+    is_operator = "operator" in cursor.spelling
+    if is_operator:
+        _logger.warning(f"Operator overloading not supported `{cursor.spelling}`")
+    return not is_operator

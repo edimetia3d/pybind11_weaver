@@ -5,6 +5,7 @@ from . import enum
 from . import klass
 from . import namespace
 from . import funktion
+from pybind11_weaver.utils import common
 
 from pylibclang import cindex
 
@@ -39,7 +40,7 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     if kind in [_KIND.CXCursor_ClassDecl,
                 _KIND.CXCursor_StructDecl] and cursor.is_definition() and not _is_specialization(cursor):
         return klass.ClassEntity(gu, cursor)
-    if kind == _KIND.CXCursor_FunctionDecl and not _is_specialization(cursor):
+    if kind == _KIND.CXCursor_FunctionDecl and not _is_specialization(cursor) and common.not_operator(cursor):
         return funktion.FunctionEntity(gu, cursor)
 
     return None

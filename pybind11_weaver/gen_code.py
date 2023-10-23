@@ -92,6 +92,9 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
     update_entity_var_stmts: List[str] = []
     for _, entity in entities.items():
         assert entity is not None
+        if isinstance(entity, entity_tree._DummyNode):
+            # things like class template will be ignored
+            continue
         entity_obj_sym = f"v{id}"
         entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
         bind_struct_name = "Bind_" + entity.get_cpp_struct_name()

@@ -85,12 +85,6 @@ class ClassEntity(entity_base.Entity):
             return cursor.access_specifier == cindex.AccessSpecifier.CX_CXXPublic and not cursor.is_deleted_method() and common.is_visible(
                 cursor, self.gu.io_config.strict_visibility_mode)
 
-        def not_operator(cursor):
-            is_operator = "operator" in cursor.spelling
-            if is_operator:
-                _logger.warning(f"Operator overloading not supported `{cursor.spelling}`")
-            return not is_operator
-
         # generate constructor binding
         ctor_found = False
         for cursor in self.cursor.get_children():
@@ -100,16 +94,15 @@ class ClassEntity(entity_base.Entity):
                     param_types = fn.fn_arg_type(cursor)
                     codes.append(
                         f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
+                    if self.gu.io_config.gen_docstring:
+                        codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
         if not ctor_found:
             codes.append(f"{pybind11_obj_sym}.def(pybind11::init<>());")
-        if self.gu.io_config.gen_docstring:
-            for i, code in enumerate(codes):
-                codes[i] = entity_base._inject_docstring(code, cursor, "last_arg")
 
         # generate method binding
         methods: Dict[str, MethodCoder] = dict()
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and is_pubic(cursor) and not_operator(cursor):
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and is_pubic(cursor) and common.not_operator(cursor):
                 if not cursor.spelling in methods:
                     methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name(),
                                                            self.gu.io_config.gen_docstring)
