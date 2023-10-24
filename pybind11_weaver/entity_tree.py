@@ -98,5 +98,5 @@ class EntityTree:
             if cursor_filename.endswith(tail):
                 in_src = True
                 break
-        return in_src and cursor.linkage == cindex.LinkageKind.CXLinkage_External and common.is_visible(cursor,
+        return in_src and cursor.linkage != cindex.LinkageKind.CXLinkage_Internal and common.is_visible(cursor,
                                                                                                         strict_visibility_mode)

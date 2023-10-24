@@ -33,19 +33,23 @@ wrapper for libclang that uses Pybind11 Weaver to generate the binding code.
 
 ## Features & Roadmap
 
-- [x] Namespace hierarchy to Python submodules
-- [x] Enum
-- [x] Function, function overload
-- [x] Callback function
-- [ ] Operation overloading
-- [x] Class method, method overloading, static method, static method overloading, constructor, constructor overloading
-- [x] Class field
-- [x] Class access control
-- [x] Generate docstring from c++ comment, for enum, enum item, function, class, class method, class field
+- [x] Binding for Enum
+- [x] Binding for Function, function overload
+- [x] Binding for C style function pointer (usually used as callback functions)
+- [ ] Biding for Operator overloading
+- [x] Binding for Class method, method overloading, static method, static method overloading, constructor, constructor
+  overloading, class field
+- [ ] Binding for concreate template instance, that includes: implicit(explicit) class(struct) template instantiation,
+  full class(struct) template specialization, extern function template instance declaration.
+- [ ] Binding for class inheritance hierarchy
+- [x] Auto bypass symbols by : Linkage (e.g. `static`), visibility (e.g. `visibility=hidden`), member access
+  control (e.g. `private`, `protected`)
+- [x] Docstring generation from c++ doxygen style comment
+- [x] Namespace hierarchy to Python module hierarchy
 - [ ] Trampoline class for virtual function
-- [x] Support working with hand-written code
+- [x] Dynamic update/disable binding by API call
+- [x] Static update/disable binding by define macro
 - [ ] Auto snake case
-- [ ] Binding for Template specialization
 
 ## Background & Recommendations
 
