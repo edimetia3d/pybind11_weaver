@@ -96,11 +96,12 @@ def _file_paths_to_include(file_list: List[str]) -> List[str]:
 
 
 def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "") -> Tuple[
-    Optional[cindex.TranslationUnit], str]:
+    Optional[cindex.TranslationUnit], Optional[List[Tuple[str, str]]]]:
     content = "\n".join(_file_paths_to_include(file_list)) + extra_content
     index = cindex.Index.create()
+    unsaved_files = [("tmp.cpp", content)]
     tu = index.parse("tmp.cpp",
-                     unsaved_files=[("tmp.cpp", content)],
+                     unsaved_files=unsaved_files,
                      args=["-x", "c++", "-fparse-all-comments", ] + cxx_flags)
     load_fail = False
     for diag in tu.diagnostics:
@@ -111,7 +112,7 @@ def load_tu(file_list: List[str], cxx_flags: List[str], extra_content: str = "")
         load_fail = True
     if load_fail:
         return None, None
-    return tu, content
+    return tu, unsaved_files
 
 
 class GenUnit:
@@ -120,20 +121,46 @@ class GenUnit:
             for k, v in key_values.items():
                 setattr(self, k, v)
 
-    def __init__(self, tu, io_config: Dict[str, Any], cxx_flags: List[str]):
+    def __init__(self, tu, io_config: Dict[str, Any], cxx_flags: List[str], unsaved_files: List[Tuple[str, str]]):
         self.creation_time: str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         self.tu: cindex.TranslationUnit = tu
-        self.src_files: List[str] = io_config["inputs"]
         self.io_config = GenUnit.IOConifg(io_config)
         self.cxx_flags = cxx_flags
+        self.unsaved_files = unsaved_files
+        self.src_files: List[str] = self._clean_src_file_to_relative(cxx_flags, io_config["inputs"])
 
-    def src_file_tail_names(self):
+    def _clean_src_file_to_relative(self, cxx_flags: List[str], file_list: List[str]) -> List[str]:
+
+        def _get_abs_includes_prefix():
+            ret = []
+            for flag in cxx_flags:
+                if flag.startswith("-I") and os.path.isabs(flag[2:]):
+                    ret.append(os.path.abspath(flag[2:]))
+            return ret
+
+        abs_prefix = _get_abs_includes_prefix()
+
+        def _try_remove_abs_prefix(path: str) -> str:
+            path = os.path.abspath(path)
+            for prefix in abs_prefix:
+                if path.startswith(prefix):
+                    return os.path.relpath(path, prefix)
+            return path
+
+        ret = []
+        for i in range(len(file_list)):
+            f = file_list[i]
+            if f.startswith('"') and os.path.isabs(f[1:-1]):
+                ret.append(f'"{_try_remove_abs_prefix(f[1:-1])}"')
+            else:
+                ret.append(f)
+        return ret
+
+    def include_files(self):
         files = []
         for f in self.src_files:
-            if f.startswith("<") or f.startswith('"'):
-                files.append(f[1:-1])
-            else:
-                files.append(f)
+            files.append(f[1:-1])
+
         return files
 
     def src_file_includes(self) -> List[str]:
@@ -148,7 +175,7 @@ def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
     ret = []
     for io_cfg in cfg["io_configs"]:
         cxx_flags = common_flags + io_cfg["extra_cxx_flags"]
-        tu, _ = load_tu(io_cfg["inputs"], cxx_flags)
+        tu, unsaved_files = load_tu(io_cfg["inputs"], cxx_flags)
         assert tu is not None
-        ret.append(GenUnit(tu, io_cfg, cxx_flags))
+        ret.append(GenUnit(tu, io_cfg, cxx_flags, unsaved_files))
     return ret
