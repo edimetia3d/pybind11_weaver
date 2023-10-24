@@ -2,6 +2,7 @@ from typing import List, Dict
 import weakref
 
 from pylibclang import cindex
+import pylibclang._C
 
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
@@ -78,9 +79,53 @@ class EntityTree:
         if not outer is self.entities:
             entity.update_parent(outer)
 
-    def load_from_gu(self, gu: gen_unit.GenUnit) -> None:
+    def _inject_explicit_template_instanitiation(self, gu: gen_unit.GenUnit):
+        mab_be_template_instance = [cindex.CursorKind.CXCursor_ClassDecl,
+                                    cindex.CursorKind.CXCursor_StructDecl, cindex.CursorKind.CXCursor_FunctionDecl]
+        explicit_instantiation = set()
+        implicit_instantiation = dict()
         root_cursor = gu.tu.cursor
-        valid_file_tail_names = gu.src_file_tail_names()
+        inc_files = gu.include_files()
+        for cursor in root_cursor.walk_preorder():
+            if not self.check_valid_cursor(cursor, inc_files, gu.io_config.strict_visibility_mode):
+                continue
+            if cursor.kind in mab_be_template_instance and common.is_concreate_template(cursor):
+                explicit_instantiation.add(cursor.displayname)
+                if cursor.displayname in implicit_instantiation:
+                    del implicit_instantiation[cursor.displayname]
+            elif cursor.kind == cindex.CursorKind.CXCursor_TemplateRef:
+                parent = cursor._ast_parent
+                concreate_t_name = None
+                if parent.kind in [cindex.CursorKind.CXCursor_FieldDecl, cindex.CursorKind.CXCursor_VarDecl,
+                                   cindex.CursorKind.CXCursor_ParmDecl]:
+                    concreate_t_name = parent.type.spelling
+                elif parent.kind == cindex.CursorKind.CXCursor_CXXBaseSpecifier:
+                    concreate_t_name = parent.displayname
+                elif parent.kind == cindex.CursorKind.CXCursor_FunctionDecl:
+                    concreate_t_name = parent.result_type.spelling
+                assert concreate_t_name
+                struct_kind = pylibclang._C.clang_getTemplateCursorKind(cursor.referenced)
+                explict_prefix = None
+                if struct_kind == cindex.CursorKind.CXCursor_StructDecl:
+                    explict_prefix = "template struct"
+                elif struct_kind == cindex.CursorKind.CXCursor_ClassDecl:
+                    explict_prefix = "template class"
+                if concreate_t_name not in explicit_instantiation:
+                    implicit_instantiation[concreate_t_name] = explict_prefix
+            else:
+                continue
+
+        init_code = "\n".join([f"{prefix} {type_name};" for prefix, type_name in implicit_instantiation.items()])
+        us = gu.unsaved_files
+        assert len(us) == 1
+        gu.unsaved_files = [(us[0][0], us[0][1] + "\n" + init_code)]
+        gu.tu.reparse(gu.unsaved_files)
+
+    def load_from_gu(self, gu: gen_unit.GenUnit) -> None:
+        self._inject_explicit_template_instanitiation(gu)
+        root_cursor = gu.tu.cursor
+        assert len(gu.unsaved_files) == 1
+        valid_file_tail_names = gu.include_files() + [gu.unsaved_files[0][0]]
         for cursor in root_cursor.walk_preorder():
             if not self.check_valid_cursor(cursor, valid_file_tail_names, gu.io_config.strict_visibility_mode):
                 continue
