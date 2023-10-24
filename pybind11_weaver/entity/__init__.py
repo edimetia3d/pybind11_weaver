@@ -15,9 +15,9 @@ _logger = logging.getLogger(__name__)
 _KIND = cindex.CursorKind
 
 
-def _is_specialization(cursor: cindex.Cursor):
-    if "<" in cursor.displayname and ">" in cursor.displayname:
-        _logger.warning(f"Specialized template not supported `{cursor.canonical.displayname}` ")
+def _is_concreate_template(cursor: cindex.Cursor):
+    if common.is_concreate_template(cursor):
+        _logger.warning(f"Concreate template not supported `{cursor.canonical.displayname}` ")
         return True
     return False
 
@@ -38,9 +38,17 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     if kind == _KIND.CXCursor_Namespace:
         return namespace.NamespaceEntity(gu, cursor)
     if kind in [_KIND.CXCursor_ClassDecl,
-                _KIND.CXCursor_StructDecl] and cursor.is_definition() and not _is_specialization(cursor):
-        return klass.ClassEntity(gu, cursor)
-    if kind == _KIND.CXCursor_FunctionDecl and not _is_specialization(cursor) and common.not_operator(cursor):
-        return funktion.FunctionEntity(gu, cursor)
+                _KIND.CXCursor_StructDecl] and cursor.is_definition():
+        if _is_concreate_template(cursor):
+            pass  # handle later
+        else:
+            return klass.ClassEntity(gu, cursor)
+    if kind == _KIND.CXCursor_FunctionDecl:
+        if common.is_operator_overload(cursor):
+            pass  # handle later
+        elif _is_concreate_template(cursor):
+            pass  # handle later
+        else:
+            return funktion.FunctionEntity(gu, cursor)
 
     return None

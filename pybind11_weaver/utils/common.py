@@ -19,8 +19,13 @@ def is_visible(cursor: cindex.Cursor, strcit_mode: bool):
         return vis if should_check else True
 
 
-def not_operator(cursor):
+def is_operator_overload(cursor: cindex.Cursor):
     is_operator = "operator" in cursor.spelling
     if is_operator:
         _logger.warning(f"Operator overloading not supported `{cursor.spelling}`")
-    return not is_operator
+    return is_operator
+
+
+def is_concreate_template(cursor: cindex.Cursor):
+    # both template specialization and instantiation are concreate template
+    return cursor.get_num_template_arguments() > 0

@@ -102,7 +102,8 @@ class ClassEntity(entity_base.Entity):
         # generate method binding
         methods: Dict[str, MethodCoder] = dict()
         for cursor in self.cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and is_pubic(cursor) and common.not_operator(cursor):
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and is_pubic(
+                    cursor) and not common.is_operator_overload(cursor):
                 if not cursor.spelling in methods:
                     methods[cursor.spelling] = MethodCoder(cursor, self.qualified_name(),
                                                            self.gu.io_config.gen_docstring)
