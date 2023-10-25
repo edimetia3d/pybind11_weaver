@@ -13,9 +13,12 @@
 
 namespace pybind11_weaver {
 
-template <typename T> bool is_type_registered() {
-  auto *type_info = pybind11::detail::get_type_info(typeid(T));
-  return type_info != nullptr;
+template <class T> void EnsureExportUsedType(pybind11::module_ &m) {
+  using DT = std::decay_t<T>;
+  if (!pybind11::detail::get_type_info(typeid(DT))) {
+    std::string name = std::string("PWCapsule") + typeid(DT).name();
+    pybind11::class_<DT>(m, name.c_str(), pybind11::module_local());
+  }
 }
 
 struct _PointerWrapperBase {

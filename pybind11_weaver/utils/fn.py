@@ -29,6 +29,18 @@ def get_wrapped_types():
     return _wrapped_db
 
 
+_fn_used_types = set()
+
+
+def get_fn_used_types():
+    return _fn_used_types
+
+
+def _add_fn_used_types(type: cindex.Type):
+    if int(type.kind) > int(cindex.TypeKind.CXType_LastBuiltin) and "std::" not in type.spelling:
+        _fn_used_types.add(type.spelling)
+
+
 class ValueCast:
     nest_level = -1
 
@@ -109,6 +121,9 @@ def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValu
                                  cindex.CursorKind.CXCursor_ClassDecl] and not pointee_decl.is_definition():
             cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
             return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
+        _add_fn_used_types(pointee)
+    else:
+        _add_fn_used_types(c_type)
 
     return ret
 

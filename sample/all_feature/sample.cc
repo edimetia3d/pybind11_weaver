@@ -6,6 +6,7 @@
 void TopFunction(int) {}
 void TopFunction(std::string &) {}
 void HiddenTopFunction(int) {}
+UnexportedType *GetNotBoundType() { return nullptr; }
 double earth::creatures::Home::Method(std::string &, int) { return 0; }
 int earth::creatures::SweetHome::Method(int i) { return i; }
 void earth::creatures::SweetHome::Method(std::string &) {}

@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 
+#include "un_export.h"
 /**
  * This is Function doc
  * @param i This is i doc
@@ -83,5 +84,7 @@ enum class disabled_Foo {
 class Foo; // forward declaration will be ignored
 __attribute__((visibility("hidden"))) void
 HiddenTopFunction(int); // visibility will be used
+
+UnexportedType *GetNotBoundType();
 
 #endif // PYBIND11_WEAVER_SAMPLE_H

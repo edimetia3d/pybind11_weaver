@@ -90,6 +90,15 @@ class TestAll(unittest.TestCase):
         self._test_callback("use_c_callback", 1)
         self._test_callback("use_cpp_callback", 2)
 
+    def test_unexport(self):
+        assert not hasattr(m, "UnexportedType")
+        passed = False
+        for attr in m.__dict__:
+            if attr.startswith("PWCapsule"):
+                assert attr.endswith("UnexportedType")
+                passed = True
+        assert passed
+
 
 if __name__ == "__main__":
     unittest.main()

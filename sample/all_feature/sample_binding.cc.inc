@@ -1,5 +1,5 @@
 
-// GENERATED AT 10/25/2023, 12:19:28
+// GENERATED AT 10/25/2023, 15:40:45
 
 #include "sample.h"
 
@@ -18,9 +18,12 @@
 
 namespace pybind11_weaver {
 
-template <typename T> bool is_type_registered() {
-  auto *type_info = pybind11::detail::get_type_info(typeid(T));
-  return type_info != nullptr;
+template <class T> void EnsureExportUsedType(pybind11::module_ &m) {
+  using DT = std::decay_t<T>;
+  if (!pybind11::detail::get_type_info(typeid(DT))) {
+    std::string name = std::string("PWCapsule") + typeid(DT).name();
+    pybind11::class_<DT>(m, name.c_str(), pybind11::module_local());
+  }
 }
 
 struct _PointerWrapperBase {
@@ -807,6 +810,35 @@ struct Entity_disabled_member_disabled_Foo
 };
 #endif // PB11_WEAVER_DISABLE_Entity_disabled_member_disabled_Foo
 
+#ifndef PB11_WEAVER_DISABLE_Entity_GetNotBoundType
+template <class Pybind11T> struct Bind_GetNotBoundType : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_GetNotBoundType(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("GetNotBoundType",
+                 static_cast<UnexportedType *(*)()>(&GetNotBoundType));
+  }
+
+  static const char *Key() { return "GetNotBoundType"; }
+};
+
+struct Entity_GetNotBoundType
+    : public Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_GetNotBoundType(EntityScope parent_h)
+      : Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_GetNotBoundType
+
 /**
  * Create all entities, return a callable guard that can be called to update all
  *entities. If the returned guard is not called, the guard will call the update
@@ -817,6 +849,7 @@ DeclFn(pybind11::module &m,
        const pybind11_weaver::CustomBindingRegistry &registry) {
   pybind11_weaver::_PointerWrapperBase::FastBind(m);
   pybind11_weaver::PointerWrapper<void *>::FastBind(m, "voidp");
+  pybind11_weaver::EnsureExportUsedType<UnexportedType>(m);
 
   auto v0 = pybind11_weaver::CreateEntity<Entity_TopFunction>(EntityScope(m),
                                                               registry);
@@ -848,6 +881,8 @@ DeclFn(pybind11::module &m,
       EntityScope(m), registry);
   auto v14 = pybind11_weaver::CreateEntity<Entity_disabled_member_disabled_Foo>(
       v13->AsScope(), registry);
+  auto v15 = pybind11_weaver::CreateEntity<Entity_GetNotBoundType>(
+      EntityScope(m), registry);
 
   auto update_fn = [=]() {
     v0->Update();
@@ -865,6 +900,7 @@ DeclFn(pybind11::module &m,
     v12->Update();
     v13->Update();
     v14->Update();
+    v15->Update();
   };
   return {update_fn};
 }

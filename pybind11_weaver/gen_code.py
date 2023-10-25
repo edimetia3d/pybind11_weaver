@@ -2,7 +2,7 @@ import os.path
 from typing import Dict, List
 import shutil
 
-from .entity import entity_base
+from .entity import entity_base, klass
 from . import entity_tree
 from . import gen_unit
 from .utils import fn
@@ -71,6 +71,7 @@ using pybind11_weaver::EntityBase;
 [[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::CustomBindingRegistry & registry){{
 pybind11_weaver::_PointerWrapperBase::FastBind(m);
 {create_warped_pointer_bindings}
+{ensure_export_used_types}
 
 {create_entity_var_stmts}
 
@@ -86,16 +87,19 @@ pybind11_weaver::_PointerWrapperBase::FastBind(m);
 
 
 def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, beg_id: int):
-    id = beg_id
+    next_id = beg_id
     entity_struct_decls: List[str] = []
     create_entity_var_stmts: List[str] = []
     update_entity_var_stmts: List[str] = []
+    exported_type: List[str] = []
     for _, entity in entities.items():
         assert entity is not None
         if isinstance(entity, entity_tree._DummyNode):
             # things like class template will be ignored
             continue
-        entity_obj_sym = f"v{id}"
+        if isinstance(entity, klass.ClassEntity):
+            exported_type.append(entity.cursor.type.spelling)
+        entity_obj_sym = f"v{next_id}"
         entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
         bind_struct_name = "Bind_" + entity.get_cpp_struct_name()
         # generate body
@@ -118,13 +122,14 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
         update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")
 
         # recursive call to children
-        ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->AsScope()", id + 1)
+        ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->AsScope()", next_id + 1)
         entity_struct_decls += ret[0]
         create_entity_var_stmts += ret[1]
         update_entity_var_stmts += ret[2]
-        id = ret[3]
+        exported_type += ret[3]
+        next_id = ret[4]
 
-    return entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, id
+    return entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, exported_type, next_id
 
 
 def gen_code(config_file: str):
@@ -138,7 +143,7 @@ def gen_code(config_file: str):
             ns_s = gu.io_config.root_module_namespace.split("::")
             for ns in ns_s:
                 target_entities = target_entities[ns].children
-        entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, _ = gen_binding_codes(
+        entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, exported_type, _ = gen_binding_codes(
             entities=target_entities,
             parent_sym="EntityScope(m)", beg_id=0)
 
@@ -156,6 +161,7 @@ def gen_code(config_file: str):
             decl_fn_name=gu.io_config.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
             create_warped_pointer_bindings=gen_wrapped_pointer_code(),
+            ensure_export_used_types=gen_ensure_code(exported_type),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
             update_entity_var_stmts="\n".join(update_entity_var_stmts),
         )
@@ -181,3 +187,13 @@ def gen_wrapped_pointer_code():
             wrapped_type_binding_code_template.format(type=type, safe_type_name=safe_type_name))
     create_warped_pointer_bindings = "\n".join(create_warped_pointer_bindings)
     return create_warped_pointer_bindings
+
+
+def gen_ensure_code(exported_types: List[str]):
+    used_types = fn.get_fn_used_types()
+    ensure_code = []
+    for type in sorted(used_types):
+        if type not in exported_types:
+            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>(m);")
+    ensure_code = "\n".join(ensure_code)
+    return ensure_code
