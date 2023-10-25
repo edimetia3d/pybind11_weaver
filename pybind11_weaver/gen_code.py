@@ -156,7 +156,7 @@ def gen_code(config_file: str):
         # gen file
         file_content = file_template.format(
             date=gu.creation_time,
-            include_directives="\n".join(gu.src_file_includes()),
+            include_directives="\n".join(gu.include_directives()),
             pybind11_weaver_header=pybind11_weaver_header,
             decl_fn_name=gu.io_config.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
