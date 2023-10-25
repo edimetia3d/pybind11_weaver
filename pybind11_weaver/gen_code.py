@@ -189,6 +189,6 @@ def gen_ensure_code(exported_types: List[str]) -> str:
     ensure_code = []
     for type in sorted(used_types):
         if type not in exported_types:
-            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>(m);")
+            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>(m,\"{type}\");")
     ensure_code = "\n".join(ensure_code)
     return ensure_code

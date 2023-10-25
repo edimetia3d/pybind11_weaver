@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pylibclang import cindex
 import pylibclang._C
 import logging
@@ -29,3 +31,28 @@ def is_operator_overload(cursor: cindex.Cursor) -> bool:
 def is_concreate_template(cursor: cindex.Cursor) -> bool:
     # both template specialization and instantiation are concreate template
     return cursor.get_num_template_arguments() > 0
+
+
+def _template_arg_name(cursor, idx, custom_mangle=False) -> Optional[str]:
+    if cursor.get_template_argument_kind(idx) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Integral:
+        return str(cursor.get_template_argument_value(idx))
+    elif cursor.get_template_argument_kind(idx) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Type:
+        t_name = cursor.get_template_argument_type(idx).spelling
+        if custom_mangle:
+            return t_name.replace(" ", "").replace("<", "_").replace(">", "_").replace(",", "_").replace("::", "_")
+        else:
+            return t_name
+    raise NotImplementedError(f"template argument kind {cursor.get_template_argument_kind(idx)} not supported")
+
+
+def get_safe_indentifier_name(cursor: cindex.Cursor) -> bool:
+    if is_concreate_template(cursor):
+        custom_mangle = cursor.spelling
+        for i in range(cursor.get_num_template_arguments()):
+            arg_name = _template_arg_name(cursor, i, custom_mangle=True)
+            if arg_name is None:
+                return cursor.mangled_name
+            custom_mangle += "_" + arg_name
+        return custom_mangle
+    else:
+        return cursor.spelling

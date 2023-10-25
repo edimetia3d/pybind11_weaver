@@ -28,3 +28,12 @@ std::string earth::creatures::SweetHome::use_cpp_callback(
   return std::string("From C++ Function") + std::to_string(callback(2, p));
 }
 int earth::creatures::NSFunction(const std::string &str) { return 0; }
+
+// Specialization of template function, so it could be found by the linker.
+template <> std::string Foo<Q::R<int>, 8>(Q::R<int>, int) {
+  return "Special one";
+}
+
+// Explicit instantiation of template function, so it could be found by the
+// linker.
+template std::string Foo<float, 9>(float, int);

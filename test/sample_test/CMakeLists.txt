@@ -6,7 +6,9 @@ endif ()
 find_package(pybind11 REQUIRED CONFIG)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../../pybind11_weaver/include)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../..)
-pybind11_add_module(all_feature_module module.cpp)
+pybind11_add_module(all_feature_module ${PROJECT_SOURCE_DIR}/sample/all_feature/binding.cc)
+add_library(all_feature_lib ${PROJECT_SOURCE_DIR}/sample/all_feature/sample.cc)
+target_link_libraries(all_feature_module PRIVATE all_feature_lib)
 
 add_test(build_extension
     "${CMAKE_COMMAND}"

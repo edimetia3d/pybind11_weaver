@@ -46,8 +46,6 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     if kind == _KIND.CXCursor_FunctionDecl:
         if common.is_operator_overload(cursor):
             pass  # handle later
-        elif _is_concreate_template(cursor):
-            pass  # handle later
         else:
             return funktion.FunctionEntity(gu, cursor)
 

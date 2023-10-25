@@ -87,4 +87,20 @@ HiddenTopFunction(int); // visibility will be used
 
 UnexportedType *GetNotBoundType();
 
+namespace Q {
+template <class T> struct R {};
+} // namespace Q
+
+/**
+ * This is Function doc
+ *
+ * Template function is also supported, but need some extra work to declare
+ * which instance should be bound.
+ * 1. need a helper file to declare functions to bind, like
+ * "sample/all_feature/template_pb11_weaver_helper.h"
+ * 2. some explicit instantiation or specialization must be provided in the
+ *   translation unit.
+ */
+template <class T, int N> std::string Foo(T, int) { return "Default one"; }
+
 #endif // PYBIND11_WEAVER_SAMPLE_H

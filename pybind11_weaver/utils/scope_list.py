@@ -18,5 +18,7 @@ def get_full_qualified_scopes(cursor: cindex.Cursor):
     return values
 
 
-def get_full_qualified_name(cursor: cindex.Cursor, seperator="::"):
-    return seperator.join(get_full_qualified_scopes(cursor) + [cursor.spelling])
+def get_full_qualified_name(cursor: cindex.Cursor, seperator="::", base_name=None):
+    if base_name is None:
+        base_name = cursor.spelling
+    return seperator.join(get_full_qualified_scopes(cursor) + [base_name])

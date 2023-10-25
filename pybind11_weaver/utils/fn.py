@@ -1,25 +1,22 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from pylibclang import cindex
 
 from . import scope_list
 
-
-def fn_arg_type(cursor: cindex.Cursor) -> List[str]:
-    return [param.type.get_canonical().spelling for param in cursor.get_arguments()]
-
-
-def fn_ret_type(cursor: cindex.Cursor) -> str:
-    return cursor.result_type.get_canonical().spelling
+from pybind11_weaver.utils import common
 
 
 def _get_fn_pointer_type(cursor: cindex.Cursor) -> str:
     """For libclang do not provide API to construct the pointer type, we have to construct it by ourself."""
     if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and not cursor.is_static_method():
-        const_mark = "const" if cursor.is_const_method() else ""
-        return f"{fn_ret_type(cursor)} ({scope_list.get_full_qualified_name(cursor.semantic_parent)}::*)({','.join(fn_arg_type(cursor))}) {const_mark}"
+        cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
+        ret_t = cursor.result_type.spelling
+        args_t = [arg.type.spelling for arg in cursor.get_arguments()]
+        return f"pybind11_weaver::FnPtrT<{cls_name},{ret_t},{','.join(args_t)}>::type"
+
     else:
-        return f"{fn_ret_type(cursor)} (*)({','.join(fn_arg_type(cursor))})"
+        return f"pybind11_weaver::FnPtrT<void,{cursor.type.spelling}>::type"
 
 
 _wrapped_db = set()
@@ -219,11 +216,24 @@ __COUNTER__ - 1
 )"""
 
 
+def _fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
+    args = []
+    if common.is_concreate_template(cursor):
+        for i in range(cursor.get_num_template_arguments()):
+            arg_name = common._template_arg_name(cursor, i)
+            args.append(arg_name)
+        base_name = f"{cursor.spelling}<{','.join(args)}>"
+    else:
+        base_name = cursor.spelling
+    return scope_list.get_full_qualified_name(cursor, base_name=base_name)
+
+
 def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
         cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
-    wrapper = wrap_c_function_to_cpp(cursor.spelling,
+    fn_ref_name = _fn_ref_name(cursor)
+    wrapper = wrap_c_function_to_cpp(fn_ref_name,
                                      cursor.result_type,
                                      [arg.type for arg in cursor.get_arguments()],
                                      [arg.spelling if arg.spelling != '' else f"arg{i}" for i, arg in
@@ -232,6 +242,4 @@ def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     if wrapper:
         return wrapper
     else:
-        pointer = f"&{scope_list.get_full_qualified_name(cursor)}"
-        method_pointer_type = _get_fn_pointer_type(cursor)
-        return f"static_cast<{method_pointer_type}>({pointer})"
+        return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{fn_ref_name})"

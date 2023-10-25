@@ -13,13 +13,25 @@
 
 namespace pybind11_weaver {
 
-template <class T> void EnsureExportUsedType(pybind11::module_ &m) {
+template <class T>
+void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
   using DT = std::decay_t<T>;
   if (!pybind11::detail::get_type_info(typeid(DT))) {
     std::string name = std::string("PWCapsule") + typeid(DT).name();
-    pybind11::class_<DT>(m, name.c_str(), pybind11::module_local());
+    pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
+    handle.def("real_name", [=]() { return realname; });
+    if constexpr (std::is_default_constructible<DT>::value) {
+      handle.def(pybind11::init<>());
+    }
   }
 }
+
+template <class ClassT, class MethodRetT, class... MethodArgs> struct FnPtrT {
+  using type = MethodRetT (ClassT::*)(MethodArgs...);
+};
+template <class FnTtype> struct FnPtrT<void, FnTtype> {
+  using type = FnTtype *;
+};
 
 struct _PointerWrapperBase {
   _PointerWrapperBase(void *ptr_) : ptr(ptr_) {}

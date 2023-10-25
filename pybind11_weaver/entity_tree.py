@@ -92,7 +92,7 @@ class EntityTree:
                     # overloading
                     assert isinstance(new_entity, funktion.FunctionEntity)
                     assert isinstance(parent[new_entity.name], funktion.FunctionEntity)
-                    parent[new_entity.name].overloads.append(child_cursor)
+                    parent[new_entity.name].overloads.append(new_entity)
                 else:
                     parent.add_child(new_entity)
                 worklist.append(new_entity)

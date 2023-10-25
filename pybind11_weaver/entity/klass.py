@@ -91,7 +91,7 @@ class ClassEntity(entity_base.Entity):
             if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
                 ctor_found = True
                 if is_pubic(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
-                    param_types = fn.fn_arg_type(cursor)
+                    param_types = [arg.type.spelling for arg in cursor.get_arguments()]
                     codes.append(
                         f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
                     if self.gu.io_config.gen_docstring:
