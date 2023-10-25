@@ -43,7 +43,7 @@ zip-safe = false
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["pybind11_weaver*"]
+include = ["pybind11_weaver.*"]
 
 [project.scripts]
-pybind11_weaver = "pybind11_weaver.main:main"
+pybind11-weaver = "pybind11_weaver.main:main"

@@ -31,7 +31,7 @@ io_configs:
         self.assertIsNone(cfg["common_config"]["compiler"])
         self.assertEqual(cfg["common_config"]["cxx_flags"], ["a", "b"])
         self.assertEqual(cfg["common_config"]["include_directories"], ["/path/to/foo", "/path/to/bar"])
-        self.assertEqual(cfg["io_configs"][0]["inputs"], ["a.h"])
+        self.assertEqual(cfg["io_configs"][0]["inputs"], ['"a.h"'])
         self.assertEqual(cfg["io_configs"][0]["output"], "/path/to/output")
         self.assertEqual(cfg["io_configs"][0]["decl_fn_name"], "Foo")
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], ["c", "d"])
@@ -51,12 +51,12 @@ io_configs:
     - inputs: ["b.h"]
       output: "/path/to/output1"
 """)
-        self.assertEqual(cfg["io_configs"][0]["inputs"], ["a.h"])
+        self.assertEqual(cfg["io_configs"][0]["inputs"], ['"a.h"'])
         self.assertEqual(cfg["io_configs"][0]["output"], "/path/to/output0")
         self.assertEqual(cfg["io_configs"][0]["decl_fn_name"], "DeclFn")
         self.assertEqual(cfg["io_configs"][0]["extra_cxx_flags"], [])
         self.assertEqual(cfg["io_configs"][0]["root_module_namespace"], "")
-        self.assertEqual(cfg["io_configs"][1]["inputs"], ["b.h"])
+        self.assertEqual(cfg["io_configs"][1]["inputs"], ['"b.h"'])
         self.assertEqual(cfg["io_configs"][1]["output"], "/path/to/output1")
         self.assertEqual(cfg["io_configs"][1]["decl_fn_name"], "DeclFn")
         self.assertEqual(cfg["io_configs"][1]["extra_cxx_flags"], [])
