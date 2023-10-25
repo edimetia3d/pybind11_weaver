@@ -13,6 +13,11 @@
 
 namespace pybind11_weaver {
 
+template <typename T> bool is_type_registered() {
+  auto *type_info = pybind11::detail::get_type_info(typeid(T));
+  return type_info != nullptr;
+}
+
 struct _PointerWrapperBase {
   _PointerWrapperBase(void *ptr_) : ptr(ptr_) {}
   _PointerWrapperBase(intptr_t ptr_v) : ptr(reinterpret_cast<void *>(ptr_v)) {}
