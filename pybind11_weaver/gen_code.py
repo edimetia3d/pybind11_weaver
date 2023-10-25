@@ -2,10 +2,10 @@ import os.path
 from typing import Dict, List
 import shutil
 
-from .entity import entity_base, klass
-from . import entity_tree
-from . import gen_unit
-from .utils import fn
+from pybind11_weaver.entity import entity_base, klass
+from pybind11_weaver import entity_tree
+from pybind11_weaver import gen_unit
+from pybind11_weaver.utils import fn
 
 entity_template = """
 #ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
@@ -94,19 +94,15 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
     exported_type: List[str] = []
     for _, entity in entities.items():
         assert entity is not None
-        if isinstance(entity, entity_tree._DummyNode):
-            # things like class template will be ignored
-            continue
         if isinstance(entity, klass.ClassEntity):
             exported_type.append(entity.cursor.type.spelling)
         entity_obj_sym = f"v{next_id}"
         entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
-        bind_struct_name = "Bind_" + entity.get_cpp_struct_name()
         # generate body
         struct_decl = entity_template.format(
             handle_type=entity.default_pybind11_type_str(),
             entity_struct_name=entity_struct_name,
-            bind_struct_name=bind_struct_name,
+            bind_struct_name="Bind_" + entity.get_cpp_struct_name(),
             parent_expr=parent_sym,
             init_handle_expr=entity.init_default_pybind11_value("parent_h"),
             binding_stmts="\n".join(entity.update_stmts("pb11_obj")),
@@ -133,11 +129,10 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
 
 
 def gen_code(config_file: str):
-    gus = gen_unit.load_gen_unit_from_config(config_file)
+    gus = gen_unit.load_all_gu(config_file)
     for gu in gus:
         # load entities
-        entity_root = entity_tree.EntityTree()
-        entity_root.load_from_gu(gu)
+        entity_root = entity_tree.EntityTree(gu)
         target_entities = entity_root.entities
         if gu.io_config.root_module_namespace != "":
             ns_s = gu.io_config.root_module_namespace.split("::")
@@ -173,7 +168,7 @@ def gen_code(config_file: str):
             os.system(f"clang-format -i {gu.io_config.output} --style=LLVM")
 
 
-def gen_wrapped_pointer_code():
+def gen_wrapped_pointer_code() -> str:
     wrapped_types = fn.get_wrapped_types()
     create_warped_pointer_bindings = []
     for type in sorted(wrapped_types):
@@ -189,7 +184,7 @@ def gen_wrapped_pointer_code():
     return create_warped_pointer_bindings
 
 
-def gen_ensure_code(exported_types: List[str]):
+def gen_ensure_code(exported_types: List[str]) -> str:
     used_types = fn.get_fn_used_types()
     ensure_code = []
     for type in sorted(used_types):

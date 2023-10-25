@@ -42,15 +42,14 @@ class Entity(abc.ABC):
     def __setitem__(self, key, value):
         self.children[key] = value
 
-    def update_parent(self, parent: "Entity"):
-        if self._parent:
-            assert self._parent() is parent
-        self._parent = weakref.ref(parent)
-        if self.name not in parent:
-            parent.children[self.name] = self
+    def add_child(self, child: "Entity"):
+        assert child.name not in self.children
+        self.children[child.name] = child
+        assert child.parent() is None
+        child._parent = weakref.ref(self)
 
     def parent(self):
-        return self._parent()
+        return None if self._parent is None else self._parent()
 
     @property
     @functools.lru_cache

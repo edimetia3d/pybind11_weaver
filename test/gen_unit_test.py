@@ -64,14 +64,14 @@ io_configs:
         self.assertEqual(cfg["io_configs"][0]["gen_docstring"], True)
 
     def test_gen_unit_load(self):
-        gen_units = gen_unit.load_gen_unit_from_config("""
+        gen_units = gen_unit.load_all_gu("""
 io_configs:
     - inputs: [<iostream>]
       output: "/path/to/output"
     - inputs: [<cstdio>]
       output: "/path/to/output2"
 """
-                                                       )
+                                         )
         self.assertEqual(len(gen_units), 2)
 
 

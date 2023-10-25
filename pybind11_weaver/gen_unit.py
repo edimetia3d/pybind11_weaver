@@ -1,9 +1,10 @@
 __all__ = [
     "GenUnit",
-    "load_gen_unit_from_config"
+    "load_all_gu"
 ]
 
 import datetime
+import functools
 from typing import List, Tuple
 
 from pylibclang import cindex
@@ -40,6 +41,7 @@ class GenUnit:
         self.tu = tu
         self.unsaved_file = unsaved_file
 
+    @functools.cache
     def include_files(self):
         files = []
         for f in self.io_config.inputs:
@@ -48,7 +50,7 @@ class GenUnit:
         return files
 
     def reload_tu(self, new_content: str):
-        unsaved_file = (self.unsaved_file[0], self.unsaved_file[1] + new_content)
+        unsaved_file = (self.unsaved_file[0], self.unsaved_file[1] + "\n" + new_content)
         self.tu.reparse([unsaved_file])
         self.unsaved_file = unsaved_file
 
@@ -56,7 +58,7 @@ class GenUnit:
         return ["#include " + path for path in self.io_config.inputs]
 
 
-def load_gen_unit_from_config(file_or_content: str) -> List[GenUnit]:
+def load_all_gu(file_or_content: str) -> List[GenUnit]:
     main_cfg = config.MainConfig.load(file_or_content)
     ret = []
     for io_cfg in main_cfg.io_configs:

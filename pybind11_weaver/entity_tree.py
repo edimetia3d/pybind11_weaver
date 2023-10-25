@@ -1,5 +1,4 @@
 from typing import List, Dict
-import weakref
 
 from pylibclang import cindex
 import pylibclang._C
@@ -7,42 +6,9 @@ import pylibclang._C
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
 from pybind11_weaver.entity import entity_base
-from pybind11_weaver.entity import funktion, klass
+from pybind11_weaver.entity import funktion
 
 from pybind11_weaver.utils import common
-
-
-class _DummyNode(entity_base.Entity):
-
-    def __init__(self, gu: gen_unit.GenUnit, cursor: cindex.Cursor, name: str):
-        entity_base.Entity.__init__(self, gu, cursor)
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name
-
-    def transfer(self, new_entity: "Entity"):
-        # update parent
-        self.parent().children[self.name] = new_entity
-
-        # update children
-        for child in self.children:
-            assert child.parent() is self
-            child._parent = weakref.ref(new_entity)
-        new_entity.children = self.children
-
-    def get_cpp_struct_name(self) -> str:
-        raise NotImplementedError
-
-    def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
-        raise NotImplementedError
-
-    def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
-        raise NotImplementedError
-
-    def default_pybind11_type_str(self) -> str:
-        raise NotImplementedError
 
 
 class EntityTree:
@@ -50,51 +16,39 @@ class EntityTree:
     Entity Tree like an AST tree, itself is the root node.
     """
 
-    def __init__(self):
+    def __init__(self, gu: gen_unit.GenUnit):
         self.entities: Dict[str, entity_base.Entity] = {}
+        self._map_from_gu(gu)
+        self.gu = gu
 
-    def nest_update_parent(self, entity: entity_base.Entity) -> None:
-        scopes = entity.get_scope()
-        # try create/update parent
-        outer = self.entities
-        for name in scopes:
-            if name not in outer:
-                new_node = _DummyNode(entity.gu, None, name)
-                outer[name] = new_node
-                if not outer is self.entities:
-                    new_node.update_parent(outer)
-            outer = outer[name]
+    def add_child(self, child: "Entity"):
+        assert child.name not in self.entities
+        self.entities[child.name] = child
+        assert child.parent() is None
 
-        # setup entity
-        entity_name = entity.name
-        if entity_name in outer:
-            if isinstance(outer[entity_name], _DummyNode):
-                outer[entity_name].transfer(entity)
-            else:
-                if isinstance(entity, funktion.FunctionEntity):
-                    assert isinstance(outer[entity_name], funktion.FunctionEntity)
-                    outer[entity_name].overloads.append(entity.cursor)
-        else:
-            outer[entity_name] = entity
-        if not outer is self.entities:
-            entity.update_parent(outer)
+    def __getitem__(self, item):
+        return self.entities[item]
 
-    def _inject_explicit_template_instanitiation(self, gu: gen_unit.GenUnit):
+    def __contains__(self, item):
+        return item in self.entities
+
+    def _inject_explicit_template_instantiation(self, gu: gen_unit.GenUnit):
         mab_be_template_instance = [cindex.CursorKind.CXCursor_ClassDecl,
                                     cindex.CursorKind.CXCursor_StructDecl, cindex.CursorKind.CXCursor_FunctionDecl]
         explicit_instantiation = set()
         implicit_instantiation = dict()
-        root_cursor = gu.tu.cursor
         inc_files = gu.include_files()
-        for cursor in root_cursor.walk_preorder():
+
+        def visitor(cursor, parent, unused1):
             if not self.check_valid_cursor(cursor, inc_files, gu.io_config.strict_visibility_mode):
-                continue
+                return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
+            parent._tu = gu.tu  # keep compatible with cindex and keep tu alive
+            cursor._tu = gu.tu
             if cursor.kind in mab_be_template_instance and common.is_concreate_template(cursor):
                 explicit_instantiation.add(cursor.displayname)
                 if cursor.displayname in implicit_instantiation:
                     del implicit_instantiation[cursor.displayname]
             elif cursor.kind == cindex.CursorKind.CXCursor_TemplateRef:
-                parent = cursor._ast_parent
                 concreate_t_name = None
                 if parent.kind in [cindex.CursorKind.CXCursor_FieldDecl, cindex.CursorKind.CXCursor_VarDecl,
                                    cindex.CursorKind.CXCursor_ParmDecl]:
@@ -112,26 +66,43 @@ class EntityTree:
                     explict_prefix = "template class"
                 if concreate_t_name not in explicit_instantiation:
                     implicit_instantiation[concreate_t_name] = explict_prefix
-            else:
-                continue
+            del cursor._tu
+            del parent._tu
+            return pylibclang._C.CXChildVisitResult.CXChildVisit_Recurse
 
+        pylibclang._C.clang_visitChildren(gu.tu.cursor, visitor, pylibclang._C.voidp(0))
         init_code = "\n".join([f"{prefix} {type_name};" for prefix, type_name in implicit_instantiation.items()])
-        us = gu.unsaved_files
-        assert len(us) == 1
-        gu.unsaved_files = [(us[0][0], us[0][1] + "\n" + init_code)]
-        gu.tu.reparse(gu.unsaved_files)
+        gu.reload_tu(init_code)
 
-    def load_from_gu(self, gu: gen_unit.GenUnit) -> None:
-        self._inject_explicit_template_instanitiation(gu)
-        root_cursor = gu.tu.cursor
-        assert len(gu.unsaved_files) == 1
-        valid_file_tail_names = gu.include_files() + [gu.unsaved_files[0][0]]
-        for cursor in root_cursor.walk_preorder():
-            if not self.check_valid_cursor(cursor, valid_file_tail_names, gu.io_config.strict_visibility_mode):
-                continue
-            new_entity = create_entity(gu, cursor)
-            if new_entity is not None:
-                self.nest_update_parent(new_entity)
+    def _map_from_gu(self, gu: gen_unit.GenUnit):
+        self._inject_explicit_template_instantiation(gu)
+        valid_files = gu.include_files() + [gu.unsaved_file[0]]
+        visibility_mode = gu.io_config.strict_visibility_mode
+        last_parent: List[entity_base.Entity] = [self]
+        worklist: List[entity_base.Entity] = []
+
+        def visitor(child_cursor, unused0, unused1):
+            child_cursor._tu = gu.tu  # keep compatible with cindex and keep tu alive
+            parent = last_parent[0]
+            if self.check_valid_cursor(child_cursor, valid_files, visibility_mode):
+                new_entity = create_entity(gu, child_cursor)
+                if new_entity is None:
+                    return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
+                if new_entity.name in parent:
+                    # overloading
+                    assert isinstance(new_entity, funktion.FunctionEntity)
+                    assert isinstance(parent[new_entity.name], funktion.FunctionEntity)
+                    parent[new_entity.name].overloads.append(child_cursor)
+                else:
+                    parent.add_child(new_entity)
+                worklist.append(new_entity)
+            return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
+
+        pylibclang._C.clang_visitChildren(gu.tu.cursor, visitor, pylibclang._C.voidp(0))
+        while len(worklist) > 0:
+            new_parent = worklist.pop()
+            last_parent[0] = new_parent
+            pylibclang._C.clang_visitChildren(new_parent.cursor, visitor, pylibclang._C.voidp(0))
 
     def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str], strict_visibility_mode: bool):
         file = cursor.location.file
