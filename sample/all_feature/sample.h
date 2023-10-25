@@ -1,6 +1,7 @@
 #ifndef PYBIND11_WEAVER_SAMPLE_H
 #define PYBIND11_WEAVER_SAMPLE_H
 
+#include <functional>
 #include <string>
 
 /**
@@ -52,6 +53,10 @@ public:
   static void StaticMethod(int);
   static void StaticMethod(std::string &);
   int member; ///< This is Member doc
+
+  std::string use_c_callback(int (*callback)(int, void *));
+
+  std::string use_cpp_callback(std::function<int(int, void *)> callback);
 
 private:
   SweetHome() = default;

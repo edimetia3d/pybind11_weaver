@@ -84,18 +84,25 @@ class CppStdFnToCFnPointer(ValueCast):
                                       [f"arg{self.nest_level}_{i}" for i, _ in enumerate(self.c_type.argument_types())])
 
 
+def _get_cpp_type_from_proto(proto: cindex.TypeKind.CXType_FunctionProto):
+    ret_t, args_t = c_function_sig_to_cpp_function_sig(proto.get_result(), proto.argument_types())
+    cpp_type = f"std::function<{ret_t} ({','.join(args_t)})>"
+    return cpp_type, CFnPointerToCppStdFn(proto, cpp_type), CppStdFnToCFnPointer(proto, cpp_type)
+
+
 def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValueToCValue"]:
     c_type = c_type.get_canonical()
     ret = c_type.spelling, lambda x: x, lambda x: x
+    if "std::function" in c_type.spelling:
+        return _get_cpp_type_from_proto(c_type.get_template_argument_type(0))
+
     if c_type.kind == cindex.TypeKind.CXType_Pointer:
         pointee = c_type.get_pointee().get_canonical()
         if pointee.kind in [cindex.TypeKind.CXType_Pointer, cindex.TypeKind.CXType_Void]:
             cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
             return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
         if pointee.kind in [cindex.TypeKind.CXType_FunctionProto]:
-            ret_t, args_t = c_function_sig_to_cpp_function_sig(pointee.get_result(), pointee.argument_types())
-            cpp_type = f"std::function<{ret_t} ({','.join(args_t)})>"
-            return cpp_type, CFnPointerToCppStdFn(pointee, cpp_type), CppStdFnToCFnPointer(pointee, cpp_type)
+            return _get_cpp_type_from_proto(pointee)
         # if pointee is a incompelete type, warp it
         pointee_decl = pointee.get_declaration()
         if pointee_decl.kind in [cindex.CursorKind.CXCursor_StructDecl,

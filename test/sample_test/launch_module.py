@@ -1,4 +1,6 @@
 import unittest
+import random
+
 import all_feature_module as m
 from all_feature_module.earth import creatures
 
@@ -62,6 +64,31 @@ class TestAll(unittest.TestCase):
         assert "This is Class doc" in creatures.SweetHome.__doc__
         # assert "This is Method doc" in creatures.SweetHome.Method.__doc__ // fixme: pybind11 seems not support doc for overloaded function?
         assert " This is Member doc" in creatures.SweetHome.member.__doc__
+
+    def _test_callback(self, callback_attr_name, call_back_id):
+        captured = []
+        randint = random.randint(0, 100)
+
+        def callback(x, ptr):
+            # note it's usually not safe to capture a value in callback function.
+            # you must make sure the value keeps alive after the callback function returns.
+            captured.append(x)
+            captured.append(ptr)
+            assert call_back_id == x
+            assert call_back_id == ptr.get_ptr()
+            return randint + x + 1
+
+        sweet_home = creatures.SweetHome(1, 1.0, "str", "str")
+        call_cb = getattr(sweet_home, callback_attr_name)
+        assert f"{randint + call_back_id + 1}" in call_cb(callback)
+        assert len(captured) == 2
+        assert captured[0] == call_back_id
+        assert isinstance(captured[1], m.voidp)
+        assert captured[1].get_ptr() == call_back_id
+
+    def test_callback(self):
+        self._test_callback("use_c_callback", 1)
+        self._test_callback("use_cpp_callback", 2)
 
 
 if __name__ == "__main__":
