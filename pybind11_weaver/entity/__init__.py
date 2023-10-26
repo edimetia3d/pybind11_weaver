@@ -39,9 +39,6 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
         return namespace.NamespaceEntity(gu, cursor)
     if kind in [_KIND.CXCursor_ClassDecl,
                 _KIND.CXCursor_StructDecl] and cursor.is_definition():
-        if _is_concreate_template(cursor):
-            pass  # handle later
-        else:
             return klass.ClassEntity(gu, cursor)
     if kind == _KIND.CXCursor_FunctionDecl:
         if common.is_operator_overload(cursor):

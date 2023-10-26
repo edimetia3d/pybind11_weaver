@@ -13,7 +13,10 @@ class EnumEntity(entity_base.Entity):
         entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind == cindex.CursorKind.CXCursor_EnumDecl
 
-    def get_cpp_struct_name(self) -> str:
+    def reference_name(self) -> str:
+        return self.cursor.type.spelling
+
+    def get_pb11weaver_struct_name(self) -> str:
         return self.cursor.type.spelling.replace("::", "_")
 
     def init_default_pybind11_value(self, parent_scope_sym: str) -> str:

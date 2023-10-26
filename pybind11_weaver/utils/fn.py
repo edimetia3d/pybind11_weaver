@@ -216,11 +216,35 @@ __COUNTER__ - 1
 )"""
 
 
-def _fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
+def _fn_template_arg_name(cursor, idx, as_python_name=False) -> Optional[str]:
+    if cursor.get_template_argument_kind(idx) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Integral:
+        return str(cursor.get_template_argument_value(idx))
+    elif cursor.get_template_argument_kind(idx) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Type:
+        if as_python_name:
+            return common.type_python_name(cursor.get_template_argument_type(idx).spelling)
+        else:
+            return cursor.get_template_argument_type(idx).spelling
+    raise NotImplementedError(f"template argument kind {cursor.get_template_argument_kind(idx)} not supported")
+
+
+def fn_python_name(cursor: cindex.Cursor) -> str:
+    if common.is_concreate_template(cursor):
+        custom_mangle = cursor.spelling
+        for i in range(cursor.get_num_template_arguments()):
+            arg_name = _fn_template_arg_name(cursor, i, as_python_name=True)
+            if arg_name is None:
+                return cursor.mangled_name
+            custom_mangle += "_" + arg_name
+        return custom_mangle
+    else:
+        return cursor.spelling
+
+
+def fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
     args = []
     if common.is_concreate_template(cursor):
         for i in range(cursor.get_num_template_arguments()):
-            arg_name = common._template_arg_name(cursor, i)
+            arg_name = _fn_template_arg_name(cursor, i, as_python_name=False)
             args.append(arg_name)
         base_name = f"{cursor.spelling}<{','.join(args)}>"
     else:
@@ -232,8 +256,8 @@ def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
         cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
-    fn_ref_name = _fn_ref_name(cursor)
-    wrapper = wrap_c_function_to_cpp(fn_ref_name,
+    ref_name = fn_ref_name(cursor)
+    wrapper = wrap_c_function_to_cpp(ref_name,
                                      cursor.result_type,
                                      [arg.type for arg in cursor.get_arguments()],
                                      [arg.spelling if arg.spelling != '' else f"arg{i}" for i, arg in
@@ -242,4 +266,4 @@ def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     if wrapper:
         return wrapper
     else:
-        return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{fn_ref_name})"
+        return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{ref_name})"

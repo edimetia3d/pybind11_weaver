@@ -5,6 +5,7 @@ from pylibclang import cindex
 from . import entity_base
 
 from pybind11_weaver import gen_unit
+from pybind11_weaver.utils import scope_list
 
 
 class NamespaceEntity(entity_base.Entity):
@@ -13,8 +14,11 @@ class NamespaceEntity(entity_base.Entity):
         entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind == cindex.CursorKind.CXCursor_Namespace
 
-    def get_cpp_struct_name(self) -> str:
-        return "_".join(self.get_scope() + [self.name])
+    def get_pb11weaver_struct_name(self) -> str:
+        return self.reference_name().replace("::", "_")
+
+    def reference_name(self) -> str:
+        return scope_list.get_full_qualified_name(self.cursor, seperator="::")
 
     def init_default_pybind11_value(self, parent_scope_sym: str) -> str:
         module = f"static_cast<pybind11::module_&>({parent_scope_sym})"

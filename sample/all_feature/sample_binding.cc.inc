@@ -1,5 +1,5 @@
 
-// GENERATED AT 10/26/2023, 14:39:01
+// GENERATED AT 10/26/2023, 20:23:29
 
 #include "sample.h"
 #include "template_pb11_weaver_helper.h"
@@ -19,6 +19,12 @@
 
 namespace pybind11_weaver {
 
+template <class BindT, class PB11T> void TryAddDefaultCtor(PB11T &handle) {
+  if constexpr (std::is_default_constructible<BindT>::value) {
+    handle.def(pybind11::init<>());
+  }
+}
+
 template <class T>
 void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
   using DT = std::decay_t<T>;
@@ -26,9 +32,7 @@ void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
     std::string name = std::string("PWCapsule") + typeid(DT).name();
     pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
     handle.def("real_name", [=]() { return realname; });
-    if constexpr (std::is_default_constructible<DT>::value) {
-      handle.def(pybind11::init<>());
-    }
+    TryAddDefaultCtor<DT>(handle);
   }
 }
 
@@ -250,6 +254,136 @@ namespace {
 using pybind11_weaver::EntityBase;
 using pybind11_weaver::EntityScope;
 
+#ifndef PB11_WEAVER_DISABLE_Entity_Foo_Q_R6int9_8
+template <class Pybind11T> struct Bind_Foo_Q_R6int9_8 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_Foo_Q_R6int9_8(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        "Foo_Q_R6int9_8",
+        static_cast<
+            pybind11_weaver::FnPtrT<void, std::string(Q::R<int>, int)>::type>(
+            &Foo<Q::R<int>, 8>),
+        R"_pb11_weaver(/**
+ * Two things need to be done to bind a template function:
+ * 1. Use syntax of "template specialization" to force generate the binding of
+ * template function.
+ * 2. Use syntax of extern template to avoid duplicate symbol.
+ * Note that some instance must exist in the translation unit.
+ */)_pb11_weaver");
+  }
+
+  static const char *Key() { return "Foo_Q_R6int9_8"; }
+};
+
+struct Entity_Foo_Q_R6int9_8
+    : public Bind_Foo_Q_R6int9_8<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_Foo_Q_R6int9_8(EntityScope parent_h)
+      : Bind_Foo_Q_R6int9_8<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_Foo_Q_R6int9_8
+
+#ifndef PB11_WEAVER_DISABLE_Entity_Foo_float_9
+template <class Pybind11T> struct Bind_Foo_float_9 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_Foo_float_9(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        "Foo_float_9",
+        static_cast<
+            pybind11_weaver::FnPtrT<void, std::string(float, int)>::type>(
+            &Foo<float, 9>),
+        R"_pb11_weaver(/**
+ * Another one
+ */)_pb11_weaver");
+  }
+
+  static const char *Key() { return "Foo_float_9"; }
+};
+
+struct Entity_Foo_float_9
+    : public Bind_Foo_float_9<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_Foo_float_9(EntityScope parent_h)
+      : Bind_Foo_float_9<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_Foo_float_9
+
+#ifndef PB11_WEAVER_DISABLE_Entity_GetNotBoundType
+template <class Pybind11T> struct Bind_GetNotBoundType : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_GetNotBoundType(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        "GetNotBoundType",
+        static_cast<pybind11_weaver::FnPtrT<void, UnexportedType *()>::type>(
+            &GetNotBoundType));
+  }
+
+  static const char *Key() { return "GetNotBoundType"; }
+};
+
+struct Entity_GetNotBoundType
+    : public Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_GetNotBoundType(EntityScope parent_h)
+      : Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_GetNotBoundType
+
+#ifndef PB11_WEAVER_DISABLE_Entity_Q
+template <class Pybind11T> struct Bind_Q : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_Q(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {}
+
+  static const char *Key() { return "Q"; }
+};
+
+struct Entity_Q : public Bind_Q<std::decay_t<pybind11::module_>> {
+
+  explicit Entity_Q(EntityScope parent_h)
+      : Bind_Q<std::decay_t<pybind11::module_>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule("Q")} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_Q
+
 #ifndef PB11_WEAVER_DISABLE_Entity_TopFunction
 template <class Pybind11T> struct Bind_TopFunction : public EntityBase {
   using Pybind11Type = Pybind11T;
@@ -264,10 +398,6 @@ template <class Pybind11T> struct Bind_TopFunction : public EntityBase {
  * This is Function doc
  * @param i This is i doc
  */)_pb11_weaver");
-    pb11_obj.def(
-        "TopFunction",
-        static_cast<pybind11_weaver::FnPtrT<void, void(std::string &)>::type>(
-            &TopFunction));
   }
 
   static const char *Key() { return "TopFunction"; }
@@ -287,6 +417,37 @@ struct Entity_TopFunction
   pybind11::module_ &handle;
 };
 #endif // PB11_WEAVER_DISABLE_Entity_TopFunction
+
+#ifndef PB11_WEAVER_DISABLE_Entity_TopFunction1
+template <class Pybind11T> struct Bind_TopFunction1 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_TopFunction1(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        "TopFunction",
+        static_cast<pybind11_weaver::FnPtrT<void, void(std::string &)>::type>(
+            &TopFunction));
+  }
+
+  static const char *Key() { return "TopFunction1"; }
+};
+
+struct Entity_TopFunction1
+    : public Bind_TopFunction1<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_TopFunction1(EntityScope parent_h)
+      : Bind_TopFunction1<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_TopFunction1
 
 #ifndef PB11_WEAVER_DISABLE_Entity_TopFunctionDef
 template <class Pybind11T> struct Bind_TopFunctionDef : public EntityBase {
@@ -317,6 +478,124 @@ struct Entity_TopFunctionDef
   pybind11::module_ &handle;
 };
 #endif // PB11_WEAVER_DISABLE_Entity_TopFunctionDef
+
+#ifndef PB11_WEAVER_DISABLE_Entity_disabled_member
+template <class Pybind11T> struct Bind_disabled_member : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_disabled_member(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {}
+
+  static const char *Key() { return "disabled_member"; }
+};
+
+struct Entity_disabled_member
+    : public Bind_disabled_member<std::decay_t<pybind11::module_>> {
+
+  explicit Entity_disabled_member(EntityScope parent_h)
+      : Bind_disabled_member<std::decay_t<pybind11::module_>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "disabled_member")} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_disabled_member
+
+#ifndef PB11_WEAVER_DISABLE_Entity_disabled_member_disabled_Foo
+template <class Pybind11T>
+struct Bind_disabled_member_disabled_Foo : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_disabled_member_disabled_Foo(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("BAR", disabled_member::disabled_Foo::BAR);
+    pb11_obj.value("BAZ", disabled_member::disabled_Foo::BAZ);
+  }
+
+  static const char *Key() { return "disabled_member_disabled_Foo"; }
+};
+
+struct Entity_disabled_member_disabled_Foo
+    : public Bind_disabled_member_disabled_Foo<
+          std::decay_t<pybind11::enum_<disabled_member::disabled_Foo>>> {
+
+  explicit Entity_disabled_member_disabled_Foo(EntityScope parent_h)
+      : Bind_disabled_member_disabled_Foo<
+            std::decay_t<pybind11::enum_<disabled_member::disabled_Foo>>>(
+            parent_h),
+        handle{parent_h, "disabled_Foo", pybind11::arithmetic()} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::enum_<disabled_member::disabled_Foo> handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_disabled_member_disabled_Foo
+
+#ifndef PB11_WEAVER_DISABLE_Entity_disabled_space
+template <class Pybind11T> struct Bind_disabled_space : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_disabled_space(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {}
+
+  static const char *Key() { return "disabled_space"; }
+};
+
+struct Entity_disabled_space
+    : public Bind_disabled_space<std::decay_t<pybind11::module_>> {
+
+  explicit Entity_disabled_space(EntityScope parent_h)
+      : Bind_disabled_space<std::decay_t<pybind11::module_>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "disabled_space")} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_disabled_space
+
+#ifndef PB11_WEAVER_DISABLE_Entity_disabled_space_Foo
+template <class Pybind11T> struct Bind_disabled_space_Foo : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_disabled_space_Foo(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.value("BAR", disabled_space::Foo::BAR);
+    pb11_obj.value("BAZ", disabled_space::Foo::BAZ);
+  }
+
+  static const char *Key() { return "disabled_space_Foo"; }
+};
+
+struct Entity_disabled_space_Foo
+    : public Bind_disabled_space_Foo<
+          std::decay_t<pybind11::enum_<disabled_space::Foo>>> {
+
+  explicit Entity_disabled_space_Foo(EntityScope parent_h)
+      : Bind_disabled_space_Foo<
+            std::decay_t<pybind11::enum_<disabled_space::Foo>>>(parent_h),
+        handle{parent_h, "Foo", pybind11::arithmetic()} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::enum_<disabled_space::Foo> handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_disabled_space_Foo
 
 #ifndef PB11_WEAVER_DISABLE_Entity_earth
 template <class Pybind11T> struct Bind_earth : public EntityBase {
@@ -353,7 +632,7 @@ template <class Pybind11T> struct Bind_earth_creatures : public EntityBase {
 
   virtual void Bind(Pybind11T &pb11_obj) {}
 
-  static const char *Key() { return "earth::creatures"; }
+  static const char *Key() { return "earth_creatures"; }
 };
 
 struct Entity_earth_creatures
@@ -372,74 +651,6 @@ struct Entity_earth_creatures
 };
 #endif // PB11_WEAVER_DISABLE_Entity_earth_creatures
 
-#ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_NSFunction
-template <class Pybind11T>
-struct Bind_earth_creatures_NSFunction : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_earth_creatures_NSFunction(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def(
-        "NSFunction",
-        static_cast<
-            pybind11_weaver::FnPtrT<void, int(const std::string &)>::type>(
-            &earth::creatures::NSFunction));
-  }
-
-  static const char *Key() { return "earth::creatures::NSFunction"; }
-};
-
-struct Entity_earth_creatures_NSFunction
-    : public Bind_earth_creatures_NSFunction<
-          std::decay_t<pybind11::module_ &>> {
-
-  explicit Entity_earth_creatures_NSFunction(EntityScope parent_h)
-      : Bind_earth_creatures_NSFunction<std::decay_t<pybind11::module_ &>>(
-            parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h)} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ &handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_NSFunction
-
-#ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_NSFunctionDef
-template <class Pybind11T>
-struct Bind_earth_creatures_NSFunctionDef : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_earth_creatures_NSFunctionDef(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def("NSFunctionDef",
-                 static_cast<pybind11_weaver::FnPtrT<void, void()>::type>(
-                     &earth::creatures::NSFunctionDef));
-  }
-
-  static const char *Key() { return "earth::creatures::NSFunctionDef"; }
-};
-
-struct Entity_earth_creatures_NSFunctionDef
-    : public Bind_earth_creatures_NSFunctionDef<
-          std::decay_t<pybind11::module_ &>> {
-
-  explicit Entity_earth_creatures_NSFunctionDef(EntityScope parent_h)
-      : Bind_earth_creatures_NSFunctionDef<std::decay_t<pybind11::module_ &>>(
-            parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h)} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ &handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_NSFunctionDef
-
 #ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_Animal
 template <class Pybind11T>
 struct Bind_earth_creatures_Animal : public EntityBase {
@@ -454,7 +665,7 @@ struct Bind_earth_creatures_Animal : public EntityBase {
                    R"_pb11_weaver(///< Cat doc)_pb11_weaver");
   }
 
-  static const char *Key() { return "earth::creatures::Animal"; }
+  static const char *Key() { return "earth_creatures_Animal"; }
 };
 
 struct Entity_earth_creatures_Animal
@@ -475,40 +686,6 @@ struct Entity_earth_creatures_Animal
 };
 #endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_Animal
 
-#ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_ValueSet
-template <class Pybind11T>
-struct Bind_earth_creatures_ValueSet : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_earth_creatures_ValueSet(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.value("LOW", earth::creatures::ValueSet::LOW);
-    pb11_obj.value("MIDDLE", earth::creatures::ValueSet::MIDDLE);
-    pb11_obj.value("HIGH", earth::creatures::ValueSet::HIGH);
-  }
-
-  static const char *Key() { return "earth::creatures::ValueSet"; }
-};
-
-struct Entity_earth_creatures_ValueSet
-    : public Bind_earth_creatures_ValueSet<
-          std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>> {
-
-  explicit Entity_earth_creatures_ValueSet(EntityScope parent_h)
-      : Bind_earth_creatures_ValueSet<
-            std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>>(
-            parent_h),
-        handle{parent_h, "ValueSet", pybind11::arithmetic()} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::enum_<earth::creatures::ValueSet> handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_ValueSet
-
 #ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_Home
 template <class Pybind11T>
 struct Bind_earth_creatures_Home : public EntityBase {
@@ -517,7 +694,7 @@ struct Bind_earth_creatures_Home : public EntityBase {
   explicit Bind_earth_creatures_Home(EntityScope parent_h) {}
 
   virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def(pybind11::init<>());
+    pybind11_weaver::TryAddDefaultCtor<earth::creatures::Home>(pb11_obj);
     Pybind11WeaverBindAllMethods(pb11_obj);
   }
 
@@ -530,7 +707,7 @@ struct Bind_earth_creatures_Home : public EntityBase {
                 &earth::creatures::Home::Method));
   }
 
-  static const char *Key() { return "earth::creatures::Home"; }
+  static const char *Key() { return "earth_creatures_Home"; }
 };
 
 struct Entity_earth_creatures_Home
@@ -562,7 +739,7 @@ struct Bind_earth_creatures_Home_Food : public EntityBase {
     pb11_obj.value("RICE", earth::creatures::Home::Food::RICE);
   }
 
-  static const char *Key() { return "earth::creatures::Home::Food"; }
+  static const char *Key() { return "earth_creatures_Home_Food"; }
 };
 
 struct Entity_earth_creatures_Home_Food
@@ -583,6 +760,68 @@ struct Entity_earth_creatures_Home_Food
 };
 #endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_Home_Food
 
+#ifndef PB11_WEAVER_DISABLE_Entity_NSFunction
+template <class Pybind11T> struct Bind_NSFunction : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_NSFunction(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        "NSFunction",
+        static_cast<
+            pybind11_weaver::FnPtrT<void, int(const std::string &)>::type>(
+            &earth::creatures::NSFunction));
+  }
+
+  static const char *Key() { return "NSFunction"; }
+};
+
+struct Entity_NSFunction
+    : public Bind_NSFunction<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_NSFunction(EntityScope parent_h)
+      : Bind_NSFunction<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_NSFunction
+
+#ifndef PB11_WEAVER_DISABLE_Entity_NSFunctionDef
+template <class Pybind11T> struct Bind_NSFunctionDef : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_NSFunctionDef(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def("NSFunctionDef",
+                 static_cast<pybind11_weaver::FnPtrT<void, void()>::type>(
+                     &earth::creatures::NSFunctionDef));
+  }
+
+  static const char *Key() { return "NSFunctionDef"; }
+};
+
+struct Entity_NSFunctionDef
+    : public Bind_NSFunctionDef<std::decay_t<pybind11::module_ &>> {
+
+  explicit Entity_NSFunctionDef(EntityScope parent_h)
+      : Bind_NSFunctionDef<std::decay_t<pybind11::module_ &>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h)} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ &handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_NSFunctionDef
+
 #ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_SweetHome
 template <class Pybind11T>
 struct Bind_earth_creatures_SweetHome : public EntityBase {
@@ -601,8 +840,11 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
 
   void Pybind11WeaverBindAllMethods(Pybind11T &obj) {
     BindMethod_Method(obj);
+    BindMethod_Method1(obj);
     BindMethod_VirtualMethod(obj);
+    BindMethod_VirtualMethod1(obj);
     BindMethod_StaticMethod(obj);
+    BindMethod_StaticMethod1(obj);
     BindMethod_use_c_callback(obj);
     BindMethod_use_cpp_callback(obj);
   }
@@ -616,6 +858,9 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
    * This is Method doc
    * @return
    */)_pb11_weaver");
+  }
+
+  virtual void BindMethod_Method1(Pybind11T &obj) {
     obj.def("Method",
             static_cast<pybind11_weaver::FnPtrT<earth::creatures::SweetHome,
                                                 void, std::string &>::type>(
@@ -627,6 +872,9 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
             static_cast<pybind11_weaver::FnPtrT<earth::creatures::SweetHome,
                                                 void, int>::type>(
                 &earth::creatures::SweetHome::VirtualMethod));
+  }
+
+  virtual void BindMethod_VirtualMethod1(Pybind11T &obj) {
     obj.def("VirtualMethod",
             static_cast<pybind11_weaver::FnPtrT<earth::creatures::SweetHome,
                                                 void, std::string &>::type>(
@@ -637,6 +885,9 @@ struct Bind_earth_creatures_SweetHome : public EntityBase {
     obj.def_static("StaticMethod",
                    static_cast<pybind11_weaver::FnPtrT<void, void(int)>::type>(
                        &earth::creatures::SweetHome::StaticMethod));
+  }
+
+  virtual void BindMethod_StaticMethod1(Pybind11T &obj) {
     obj.def_static(
         "StaticMethod",
         static_cast<pybind11_weaver::FnPtrT<void, void(std::string &)>::type>(
@@ -695,7 +946,7 @@ __COUNTER__ - 1
         });
   }
 
-  static const char *Key() { return "earth::creatures::SweetHome"; }
+  static const char *Key() { return "earth_creatures_SweetHome"; }
 };
 
 struct Entity_earth_creatures_SweetHome
@@ -719,225 +970,39 @@ struct Entity_earth_creatures_SweetHome
 };
 #endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_SweetHome
 
-#ifndef PB11_WEAVER_DISABLE_Entity_disabled_space
-template <class Pybind11T> struct Bind_disabled_space : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_disabled_space(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {}
-
-  static const char *Key() { return "disabled_space"; }
-};
-
-struct Entity_disabled_space
-    : public Bind_disabled_space<std::decay_t<pybind11::module_>> {
-
-  explicit Entity_disabled_space(EntityScope parent_h)
-      : Bind_disabled_space<std::decay_t<pybind11::module_>>(parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
-            "disabled_space")} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_disabled_space
-
-#ifndef PB11_WEAVER_DISABLE_Entity_disabled_space_Foo
-template <class Pybind11T> struct Bind_disabled_space_Foo : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_disabled_space_Foo(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.value("BAR", disabled_space::Foo::BAR);
-    pb11_obj.value("BAZ", disabled_space::Foo::BAZ);
-  }
-
-  static const char *Key() { return "disabled_space::Foo"; }
-};
-
-struct Entity_disabled_space_Foo
-    : public Bind_disabled_space_Foo<
-          std::decay_t<pybind11::enum_<disabled_space::Foo>>> {
-
-  explicit Entity_disabled_space_Foo(EntityScope parent_h)
-      : Bind_disabled_space_Foo<
-            std::decay_t<pybind11::enum_<disabled_space::Foo>>>(parent_h),
-        handle{parent_h, "Foo", pybind11::arithmetic()} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::enum_<disabled_space::Foo> handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_disabled_space_Foo
-
-#ifndef PB11_WEAVER_DISABLE_Entity_disabled_member
-template <class Pybind11T> struct Bind_disabled_member : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_disabled_member(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {}
-
-  static const char *Key() { return "disabled_member"; }
-};
-
-struct Entity_disabled_member
-    : public Bind_disabled_member<std::decay_t<pybind11::module_>> {
-
-  explicit Entity_disabled_member(EntityScope parent_h)
-      : Bind_disabled_member<std::decay_t<pybind11::module_>>(parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
-            "disabled_member")} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_disabled_member
-
-#ifndef PB11_WEAVER_DISABLE_Entity_disabled_member_disabled_Foo
+#ifndef PB11_WEAVER_DISABLE_Entity_earth_creatures_ValueSet
 template <class Pybind11T>
-struct Bind_disabled_member_disabled_Foo : public EntityBase {
+struct Bind_earth_creatures_ValueSet : public EntityBase {
   using Pybind11Type = Pybind11T;
 
-  explicit Bind_disabled_member_disabled_Foo(EntityScope parent_h) {}
+  explicit Bind_earth_creatures_ValueSet(EntityScope parent_h) {}
 
   virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.value("BAR", disabled_member::disabled_Foo::BAR);
-    pb11_obj.value("BAZ", disabled_member::disabled_Foo::BAZ);
+    pb11_obj.value("LOW", earth::creatures::ValueSet::LOW);
+    pb11_obj.value("MIDDLE", earth::creatures::ValueSet::MIDDLE);
+    pb11_obj.value("HIGH", earth::creatures::ValueSet::HIGH);
   }
 
-  static const char *Key() { return "disabled_member::disabled_Foo"; }
+  static const char *Key() { return "earth_creatures_ValueSet"; }
 };
 
-struct Entity_disabled_member_disabled_Foo
-    : public Bind_disabled_member_disabled_Foo<
-          std::decay_t<pybind11::enum_<disabled_member::disabled_Foo>>> {
+struct Entity_earth_creatures_ValueSet
+    : public Bind_earth_creatures_ValueSet<
+          std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>> {
 
-  explicit Entity_disabled_member_disabled_Foo(EntityScope parent_h)
-      : Bind_disabled_member_disabled_Foo<
-            std::decay_t<pybind11::enum_<disabled_member::disabled_Foo>>>(
+  explicit Entity_earth_creatures_ValueSet(EntityScope parent_h)
+      : Bind_earth_creatures_ValueSet<
+            std::decay_t<pybind11::enum_<earth::creatures::ValueSet>>>(
             parent_h),
-        handle{parent_h, "disabled_Foo", pybind11::arithmetic()} {}
+        handle{parent_h, "ValueSet", pybind11::arithmetic()} {}
 
   void Update() override { Bind(handle); }
 
   EntityScope AsScope() override { return EntityScope(handle); }
 
-  pybind11::enum_<disabled_member::disabled_Foo> handle;
+  pybind11::enum_<earth::creatures::ValueSet> handle;
 };
-#endif // PB11_WEAVER_DISABLE_Entity_disabled_member_disabled_Foo
-
-#ifndef PB11_WEAVER_DISABLE_Entity_GetNotBoundType
-template <class Pybind11T> struct Bind_GetNotBoundType : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_GetNotBoundType(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def(
-        "GetNotBoundType",
-        static_cast<pybind11_weaver::FnPtrT<void, UnexportedType *()>::type>(
-            &GetNotBoundType));
-  }
-
-  static const char *Key() { return "GetNotBoundType"; }
-};
-
-struct Entity_GetNotBoundType
-    : public Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>> {
-
-  explicit Entity_GetNotBoundType(EntityScope parent_h)
-      : Bind_GetNotBoundType<std::decay_t<pybind11::module_ &>>(parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h)} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ &handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_GetNotBoundType
-
-#ifndef PB11_WEAVER_DISABLE_Entity_Q
-template <class Pybind11T> struct Bind_Q : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_Q(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {}
-
-  static const char *Key() { return "Q"; }
-};
-
-struct Entity_Q : public Bind_Q<std::decay_t<pybind11::module_>> {
-
-  explicit Entity_Q(EntityScope parent_h)
-      : Bind_Q<std::decay_t<pybind11::module_>>(parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule("Q")} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_Q
-
-#ifndef PB11_WEAVER_DISABLE_Entity_Foo
-template <class Pybind11T> struct Bind_Foo : public EntityBase {
-  using Pybind11Type = Pybind11T;
-
-  explicit Bind_Foo(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def(
-        "Foo_Q_R_int__8",
-        static_cast<
-            pybind11_weaver::FnPtrT<void, std::string(Q::R<int>, int)>::type>(
-            &Foo<Q::R<int>, 8>),
-        R"_pb11_weaver(/**
- * Two things need to be done to bind a template function:
- * 1. Use syntax of "template specialization" to force generate the binding of
- * template function.
- * 2. Use syntax of extern template to avoid duplicate symbol.
- * Note that some instance must exist in the translation unit.
- */)_pb11_weaver");
-    pb11_obj.def(
-        "Foo_float_9",
-        static_cast<
-            pybind11_weaver::FnPtrT<void, std::string(float, int)>::type>(
-            &Foo<float, 9>),
-        R"_pb11_weaver(/**
- * Another one
- */)_pb11_weaver");
-  }
-
-  static const char *Key() { return "Foo"; }
-};
-
-struct Entity_Foo : public Bind_Foo<std::decay_t<pybind11::module_ &>> {
-
-  explicit Entity_Foo(EntityScope parent_h)
-      : Bind_Foo<std::decay_t<pybind11::module_ &>>(parent_h),
-        handle{static_cast<pybind11::module_ &>(parent_h)} {}
-
-  void Update() override { Bind(handle); }
-
-  EntityScope AsScope() override { return EntityScope(handle); }
-
-  pybind11::module_ &handle;
-};
-#endif // PB11_WEAVER_DISABLE_Entity_Foo
+#endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_ValueSet
 
 /**
  * Create all entities, return a callable guard that can be called to update all
@@ -949,45 +1014,49 @@ DeclFn(pybind11::module &m,
        const pybind11_weaver::CustomBindingRegistry &registry) {
   pybind11_weaver::_PointerWrapperBase::FastBind(m);
   pybind11_weaver::PointerWrapper<void *>::FastBind(m, "voidp");
+
+  auto v0 = pybind11_weaver::CreateEntity<Entity_Foo_Q_R6int9_8>(EntityScope(m),
+                                                                 registry);
+  auto v1 = pybind11_weaver::CreateEntity<Entity_Foo_float_9>(EntityScope(m),
+                                                              registry);
+  auto v2 = pybind11_weaver::CreateEntity<Entity_GetNotBoundType>(
+      EntityScope(m), registry);
+  auto v3 = pybind11_weaver::CreateEntity<Entity_Q>(EntityScope(m), registry);
+  auto v4 = pybind11_weaver::CreateEntity<Entity_TopFunction>(EntityScope(m),
+                                                              registry);
+  auto v5 = pybind11_weaver::CreateEntity<Entity_TopFunction1>(EntityScope(m),
+                                                               registry);
+  auto v6 = pybind11_weaver::CreateEntity<Entity_TopFunctionDef>(EntityScope(m),
+                                                                 registry);
+  auto v7 = pybind11_weaver::CreateEntity<Entity_disabled_member>(
+      EntityScope(m), registry);
+  auto v8 = pybind11_weaver::CreateEntity<Entity_disabled_member_disabled_Foo>(
+      v7->AsScope(), registry);
+  auto v9 = pybind11_weaver::CreateEntity<Entity_disabled_space>(EntityScope(m),
+                                                                 registry);
+  auto v10 = pybind11_weaver::CreateEntity<Entity_disabled_space_Foo>(
+      v9->AsScope(), registry);
+  auto v11 =
+      pybind11_weaver::CreateEntity<Entity_earth>(EntityScope(m), registry);
+  auto v12 = pybind11_weaver::CreateEntity<Entity_earth_creatures>(
+      v11->AsScope(), registry);
+  auto v13 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Animal>(
+      v12->AsScope(), registry);
+  auto v14 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home>(
+      v12->AsScope(), registry);
+  auto v15 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home_Food>(
+      v14->AsScope(), registry);
+  auto v16 = pybind11_weaver::CreateEntity<Entity_NSFunction>(v12->AsScope(),
+                                                              registry);
+  auto v17 = pybind11_weaver::CreateEntity<Entity_NSFunctionDef>(v12->AsScope(),
+                                                                 registry);
+  auto v18 = pybind11_weaver::CreateEntity<Entity_earth_creatures_SweetHome>(
+      v12->AsScope(), registry);
+  auto v19 = pybind11_weaver::CreateEntity<Entity_earth_creatures_ValueSet>(
+      v12->AsScope(), registry);
+
   pybind11_weaver::EnsureExportUsedType<Q::R<int>>(m, "Q::R<int>");
   pybind11_weaver::EnsureExportUsedType<UnexportedType>(m, "UnexportedType");
-
-  auto v0 = pybind11_weaver::CreateEntity<Entity_TopFunction>(EntityScope(m),
-                                                              registry);
-  auto v1 = pybind11_weaver::CreateEntity<Entity_TopFunctionDef>(EntityScope(m),
-                                                                 registry);
-  auto v2 =
-      pybind11_weaver::CreateEntity<Entity_earth>(EntityScope(m), registry);
-  auto v3 = pybind11_weaver::CreateEntity<Entity_earth_creatures>(v2->AsScope(),
-                                                                  registry);
-  auto v4 = pybind11_weaver::CreateEntity<Entity_earth_creatures_NSFunction>(
-      v3->AsScope(), registry);
-  auto v5 = pybind11_weaver::CreateEntity<Entity_earth_creatures_NSFunctionDef>(
-      v3->AsScope(), registry);
-  auto v6 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Animal>(
-      v3->AsScope(), registry);
-  auto v7 = pybind11_weaver::CreateEntity<Entity_earth_creatures_ValueSet>(
-      v3->AsScope(), registry);
-  auto v8 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home>(
-      v3->AsScope(), registry);
-  auto v9 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home_Food>(
-      v8->AsScope(), registry);
-  auto v10 = pybind11_weaver::CreateEntity<Entity_earth_creatures_SweetHome>(
-      v3->AsScope(), registry);
-  auto v11 = pybind11_weaver::CreateEntity<Entity_disabled_space>(
-      EntityScope(m), registry);
-  auto v12 = pybind11_weaver::CreateEntity<Entity_disabled_space_Foo>(
-      v11->AsScope(), registry);
-  auto v13 = pybind11_weaver::CreateEntity<Entity_disabled_member>(
-      EntityScope(m), registry);
-  auto v14 = pybind11_weaver::CreateEntity<Entity_disabled_member_disabled_Foo>(
-      v13->AsScope(), registry);
-  auto v15 = pybind11_weaver::CreateEntity<Entity_GetNotBoundType>(
-      EntityScope(m), registry);
-  auto v16 = pybind11_weaver::CreateEntity<Entity_Q>(EntityScope(m), registry);
-  auto v17 =
-      pybind11_weaver::CreateEntity<Entity_Foo>(EntityScope(m), registry);
-
   auto update_fn = [=]() {
     v0->Update();
     v1->Update();
@@ -1007,6 +1076,8 @@ DeclFn(pybind11::module &m,
     v15->Update();
     v16->Update();
     v17->Update();
+    v18->Update();
+    v19->Update();
   };
   return {update_fn};
 }

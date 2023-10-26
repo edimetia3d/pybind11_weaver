@@ -36,6 +36,7 @@ public:
             static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
                 &earth::creatures::SweetHome::Method));
   }
+  void BindMethod_Method1(Pybind11Type &obj) override {}
 };
 } // namespace
 PYBIND11_MODULE(all_feature_module, m) {

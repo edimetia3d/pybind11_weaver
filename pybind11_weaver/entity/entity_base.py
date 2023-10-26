@@ -54,17 +54,16 @@ class Entity(abc.ABC):
     @property
     @functools.lru_cache
     def name(self):
-        return self.cursor.spelling
-
-    @functools.lru_cache
-    def qualified_name(self) -> str:
-        return scope_list.get_full_qualified_name(self.cursor)
-
-    def get_scope(self) -> List[str]:
-        return scope_list.get_full_qualified_scopes(self.cursor)
+        """Used to difference different entity instances in the same scope."""
+        return self.cursor.displayname
 
     @abc.abstractmethod
-    def get_cpp_struct_name(self) -> str:
+    def reference_name(self) -> str:
+        """Used to reference this object in C++ code."""
+        pass
+
+    @abc.abstractmethod
+    def get_pb11weaver_struct_name(self) -> str:
         """Unique name of the entity, must be able to used as a C++ identifier."""
         pass
 

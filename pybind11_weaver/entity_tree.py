@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from pylibclang import cindex
 import pylibclang._C
@@ -6,7 +6,6 @@ import pylibclang._C
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
 from pybind11_weaver.entity import entity_base
-from pybind11_weaver.entity import funktion
 
 from pybind11_weaver.utils import common
 
@@ -78,31 +77,28 @@ class EntityTree:
         self._inject_explicit_template_instantiation(gu)
         valid_files = gu.include_files() + [gu.unsaved_file[0]]
         visibility_mode = gu.io_config.strict_visibility_mode
-        last_parent: List[entity_base.Entity] = [self]
-        worklist: List[entity_base.Entity] = []
+        last_parent: List[entity_base.Entity] = [None]
+        worklist: List[Tuple[cindex.Cursor, entity_base.Entity]] = [(gu.tu.cursor, self)]
 
         def visitor(child_cursor, unused0, unused1):
             child_cursor._tu = gu.tu  # keep compatible with cindex and keep tu alive
             parent = last_parent[0]
             if self.check_valid_cursor(child_cursor, valid_files, visibility_mode):
+                if child_cursor.kind == cindex.CursorKind.CXCursor_UnexposedDecl:
+                    worklist.append((child_cursor, parent))
+                    return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
                 new_entity = create_entity(gu, child_cursor)
                 if new_entity is None:
                     return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
-                if new_entity.name in parent:
-                    # overloading
-                    assert isinstance(new_entity, funktion.FunctionEntity)
-                    assert isinstance(parent[new_entity.name], funktion.FunctionEntity)
-                    parent[new_entity.name].overloads.append(new_entity)
-                else:
-                    parent.add_child(new_entity)
-                worklist.append(new_entity)
+                parent.add_child(new_entity)
+                worklist.append((new_entity.cursor, new_entity))
             return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
 
-        pylibclang._C.clang_visitChildren(gu.tu.cursor, visitor, pylibclang._C.voidp(0))
         while len(worklist) > 0:
-            new_parent = worklist.pop()
-            last_parent[0] = new_parent
-            pylibclang._C.clang_visitChildren(new_parent.cursor, visitor, pylibclang._C.voidp(0))
+            new_item = worklist.pop()
+            last_parent[0] = new_item[1]
+            next_cur = new_item[0]
+            pylibclang._C.clang_visitChildren(next_cur, visitor, pylibclang._C.voidp(0))
 
     def check_valid_cursor(self, cursor: cindex.Cursor, valid_tail_names: List[str], strict_visibility_mode: bool):
         file = cursor.location.file

@@ -100,7 +100,7 @@ class TestAll(unittest.TestCase):
         assert passed
 
     def test_template_function(self):
-        assert "Special one" == m.Foo_Q_R_int__8(m.PWCapsuleN1Q1RIiEE(), 1)
+        assert "Special one" == m.Foo_Q_R6int9_8(m.PWCapsuleN1Q1RIiEE(), 1)
         assert "Default one" == m.Foo_float_9(1.0, 1)
 
 

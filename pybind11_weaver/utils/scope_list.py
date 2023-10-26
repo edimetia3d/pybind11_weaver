@@ -12,7 +12,7 @@ def get_full_qualified_scopes(cursor: cindex.Cursor):
     cursor = cursor.semantic_parent
     while cursor is not None and cursor.kind not in [cindex.CursorKind.CXCursor_TranslationUnit,
                                                      cindex.CursorKind.CXCursor_UnexposedDecl]:
-        values.append(cursor.spelling)
+        values.append(cursor.displayname)
         cursor = cursor.semantic_parent
     values.reverse()
     return values
@@ -20,5 +20,5 @@ def get_full_qualified_scopes(cursor: cindex.Cursor):
 
 def get_full_qualified_name(cursor: cindex.Cursor, seperator="::", base_name=None):
     if base_name is None:
-        base_name = cursor.spelling
+        base_name = cursor.displayname
     return seperator.join(get_full_qualified_scopes(cursor) + [base_name])

@@ -13,6 +13,12 @@
 
 namespace pybind11_weaver {
 
+template <class BindT, class PB11T> void TryAddDefaultCtor(PB11T &handle) {
+  if constexpr (std::is_default_constructible<BindT>::value) {
+    handle.def(pybind11::init<>());
+  }
+}
+
 template <class T>
 void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
   using DT = std::decay_t<T>;
@@ -20,9 +26,7 @@ void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
     std::string name = std::string("PWCapsule") + typeid(DT).name();
     pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
     handle.def("real_name", [=]() { return realname; });
-    if constexpr (std::is_default_constructible<DT>::value) {
-      handle.def(pybind11::init<>());
-    }
+    TryAddDefaultCtor<DT>(handle);
   }
 }
 

@@ -71,10 +71,10 @@ using pybind11_weaver::EntityBase;
 [[nodiscard]] pybind11_weaver::CallUpdateGuard {decl_fn_name}(pybind11::module & m, const pybind11_weaver::CustomBindingRegistry & registry){{
 pybind11_weaver::_PointerWrapperBase::FastBind(m);
 {create_warped_pointer_bindings}
-{ensure_export_used_types}
 
 {create_entity_var_stmts}
 
+{ensure_export_used_types}
     auto update_fn = [=](){{
 {update_entity_var_stmts}    
     }};
@@ -92,21 +92,23 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
     create_entity_var_stmts: List[str] = []
     update_entity_var_stmts: List[str] = []
     exported_type: List[str] = []
-    for _, entity in entities.items():
+    sorted_keys = sorted(entities.keys())
+    for key in sorted_keys:
+        entity = entities[key]
         assert entity is not None
         if isinstance(entity, klass.ClassEntity):
             exported_type.append(entity.cursor.type.spelling)
         entity_obj_sym = f"v{next_id}"
-        entity_struct_name = "Entity_" + entity.get_cpp_struct_name()
+        entity_struct_name = "Entity_" + entity.get_pb11weaver_struct_name()
         # generate body
         struct_decl = entity_template.format(
             handle_type=entity.default_pybind11_type_str(),
             entity_struct_name=entity_struct_name,
-            bind_struct_name="Bind_" + entity.get_cpp_struct_name(),
+            bind_struct_name="Bind_" + entity.get_pb11weaver_struct_name(),
             parent_expr=parent_sym,
             init_handle_expr=entity.init_default_pybind11_value("parent_h"),
             binding_stmts="\n".join(entity.update_stmts("pb11_obj")),
-            unique_struct_key=f"\"{entity.qualified_name()}\"",
+            unique_struct_key=f"\"{entity.get_pb11weaver_struct_name()}\"",
             extra_code=entity.extra_code())
         entity_struct_decls.append(struct_decl)
 
