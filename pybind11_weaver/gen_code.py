@@ -11,14 +11,14 @@ entity_template = """
 #ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
 template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
   using Pybind11Type = Pybind11T;
+  
+  {extra_code}
 
   explicit {bind_struct_name}(EntityScope parent_h){{}}
 
   virtual void Bind(Pybind11T &pb11_obj) {{
     {binding_stmts} 
   }}
-  
-  {extra_code}
   
   static const char * Key(){{ 
     return {unique_struct_key};

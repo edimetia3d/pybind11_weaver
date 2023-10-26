@@ -13,7 +13,7 @@ def _get_fn_pointer_type(cursor: cindex.Cursor) -> str:
         cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
         ret_t = cursor.result_type.spelling
         args_t = [arg.type.spelling for arg in cursor.get_arguments()]
-        return f"pybind11_weaver::FnPtrT<{cls_name},{ret_t},{','.join(args_t)}>::type"
+        return f"pybind11_weaver::FnPtrT<{cls_name},{','.join([ret_t] + args_t)}>::type"
 
     else:
         return f"pybind11_weaver::FnPtrT<void,{cursor.type.spelling}>::type"

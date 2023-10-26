@@ -1,5 +1,5 @@
 
-// GENERATED AT 10/26/2023, 20:23:29
+// GENERATED AT 10/27/2023, 01:09:30
 
 #include "sample.h"
 #include "template_pb11_weaver_helper.h"
@@ -691,13 +691,6 @@ template <class Pybind11T>
 struct Bind_earth_creatures_Home : public EntityBase {
   using Pybind11Type = Pybind11T;
 
-  explicit Bind_earth_creatures_Home(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pybind11_weaver::TryAddDefaultCtor<earth::creatures::Home>(pb11_obj);
-    Pybind11WeaverBindAllMethods(pb11_obj);
-  }
-
   void Pybind11WeaverBindAllMethods(Pybind11T &obj) { BindMethod_Method(obj); }
 
   virtual void BindMethod_Method(Pybind11T &obj) {
@@ -705,6 +698,13 @@ struct Bind_earth_creatures_Home : public EntityBase {
             static_cast<pybind11_weaver::FnPtrT<earth::creatures::Home, double,
                                                 std::string &, int>::type>(
                 &earth::creatures::Home::Method));
+  }
+
+  explicit Bind_earth_creatures_Home(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pybind11_weaver::TryAddDefaultCtor<earth::creatures::Home>(pb11_obj);
+    Pybind11WeaverBindAllMethods(pb11_obj);
   }
 
   static const char *Key() { return "earth_creatures_Home"; }
@@ -827,17 +827,6 @@ template <class Pybind11T>
 struct Bind_earth_creatures_SweetHome : public EntityBase {
   using Pybind11Type = Pybind11T;
 
-  explicit Bind_earth_creatures_SweetHome(EntityScope parent_h) {}
-
-  virtual void Bind(Pybind11T &pb11_obj) {
-    pb11_obj.def(
-        pybind11::init<int, float, const std::string &, std::string *>());
-    Pybind11WeaverBindAllMethods(pb11_obj);
-    pb11_obj.def_readwrite(
-        "member", &earth::creatures::SweetHome::member,
-        R"_pb11_weaver(///< This is Member doc)_pb11_weaver");
-  }
-
   void Pybind11WeaverBindAllMethods(Pybind11T &obj) {
     BindMethod_Method(obj);
     BindMethod_Method1(obj);
@@ -946,6 +935,17 @@ __COUNTER__ - 1
         });
   }
 
+  explicit Bind_earth_creatures_SweetHome(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pb11_obj.def(
+        pybind11::init<int, float, const std::string &, std::string *>());
+    Pybind11WeaverBindAllMethods(pb11_obj);
+    pb11_obj.def_readwrite(
+        "member", &earth::creatures::SweetHome::member,
+        R"_pb11_weaver(///< This is Member doc)_pb11_weaver");
+  }
+
   static const char *Key() { return "earth_creatures_SweetHome"; }
 };
 
@@ -1004,6 +1004,128 @@ struct Entity_earth_creatures_ValueSet
 };
 #endif // PB11_WEAVER_DISABLE_Entity_earth_creatures_ValueSet
 
+#ifndef PB11_WEAVER_DISABLE_Entity_template_ns
+template <class Pybind11T> struct Bind_template_ns : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  explicit Bind_template_ns(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {}
+
+  static const char *Key() { return "template_ns"; }
+};
+
+struct Entity_template_ns
+    : public Bind_template_ns<std::decay_t<pybind11::module_>> {
+
+  explicit Entity_template_ns(EntityScope parent_h)
+      : Bind_template_ns<std::decay_t<pybind11::module_>>(parent_h),
+        handle{static_cast<pybind11::module_ &>(parent_h).def_submodule(
+            "template_ns")} {}
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::module_ handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_template_ns
+
+#ifndef PB11_WEAVER_DISABLE_Entity_template_ns_TemplateClass6float9
+template <class Pybind11T>
+struct Bind_template_ns_TemplateClass6float9 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  using T = float;
+
+  void Pybind11WeaverBindAllMethods(Pybind11T &obj) { BindMethod_Get(obj); }
+
+  virtual void BindMethod_Get(Pybind11T &obj) {
+    obj.def("Get", static_cast<pybind11_weaver::FnPtrT<
+                       template_ns::TemplateClass<float>, float>::type>(
+                       &template_ns::TemplateClass<float>::Get));
+  }
+
+  explicit Bind_template_ns_TemplateClass6float9(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pybind11_weaver::TryAddDefaultCtor<template_ns::TemplateClass<float>>(
+        pb11_obj);
+    Pybind11WeaverBindAllMethods(pb11_obj);
+  }
+
+  static const char *Key() { return "template_ns_TemplateClass6float9"; }
+};
+
+struct Entity_template_ns_TemplateClass6float9
+    : public Bind_template_ns_TemplateClass6float9<
+          std::decay_t<pybind11::class_<template_ns::TemplateClass<float>>>> {
+
+  explicit Entity_template_ns_TemplateClass6float9(EntityScope parent_h)
+      : Bind_template_ns_TemplateClass6float9<
+            std::decay_t<pybind11::class_<template_ns::TemplateClass<float>>>>(
+            parent_h),
+        handle{parent_h, "TemplateClass6float9", pybind11::dynamic_attr(),
+               R"_pb11_weaver(// Specialization is supported directly
+// extra binding could be enabled by using extern explicit instantiation)_pb11_weaver"} {
+  }
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::class_<template_ns::TemplateClass<float>> handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_template_ns_TemplateClass6float9
+
+#ifndef PB11_WEAVER_DISABLE_Entity_template_ns_TemplateClass6int9
+template <class Pybind11T>
+struct Bind_template_ns_TemplateClass6int9 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  using T = int;
+
+  void Pybind11WeaverBindAllMethods(Pybind11T &obj) { BindMethod_Method(obj); }
+
+  virtual void BindMethod_Method(Pybind11T &obj) {
+    obj.def("Method",
+            static_cast<pybind11_weaver::FnPtrT<template_ns::TemplateClass<T>,
+                                                T, T *>::type>(
+                &template_ns::TemplateClass<T>::Method));
+  }
+
+  explicit Bind_template_ns_TemplateClass6int9(EntityScope parent_h) {}
+
+  virtual void Bind(Pybind11T &pb11_obj) {
+    pybind11_weaver::TryAddDefaultCtor<template_ns::TemplateClass<int>>(
+        pb11_obj);
+    Pybind11WeaverBindAllMethods(pb11_obj);
+  }
+
+  static const char *Key() { return "template_ns_TemplateClass6int9"; }
+};
+
+struct Entity_template_ns_TemplateClass6int9
+    : public Bind_template_ns_TemplateClass6int9<
+          std::decay_t<pybind11::class_<template_ns::TemplateClass<int>>>> {
+
+  explicit Entity_template_ns_TemplateClass6int9(EntityScope parent_h)
+      : Bind_template_ns_TemplateClass6int9<
+            std::decay_t<pybind11::class_<template_ns::TemplateClass<int>>>>(
+            parent_h),
+        handle{
+            parent_h, "TemplateClass6int9", pybind11::dynamic_attr(),
+            R"_pb11_weaver(// For template class, an extern explicit instantiation is enough.)_pb11_weaver"} {
+  }
+
+  void Update() override { Bind(handle); }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  pybind11::class_<template_ns::TemplateClass<int>> handle;
+};
+#endif // PB11_WEAVER_DISABLE_Entity_template_ns_TemplateClass6int9
+
 /**
  * Create all entities, return a callable guard that can be called to update all
  *entities. If the returned guard is not called, the guard will call the update
@@ -1054,6 +1176,14 @@ DeclFn(pybind11::module &m,
       v12->AsScope(), registry);
   auto v19 = pybind11_weaver::CreateEntity<Entity_earth_creatures_ValueSet>(
       v12->AsScope(), registry);
+  auto v20 = pybind11_weaver::CreateEntity<Entity_template_ns>(EntityScope(m),
+                                                               registry);
+  auto v21 =
+      pybind11_weaver::CreateEntity<Entity_template_ns_TemplateClass6float9>(
+          v20->AsScope(), registry);
+  auto v22 =
+      pybind11_weaver::CreateEntity<Entity_template_ns_TemplateClass6int9>(
+          v20->AsScope(), registry);
 
   pybind11_weaver::EnsureExportUsedType<Q::R<int>>(m, "Q::R<int>");
   pybind11_weaver::EnsureExportUsedType<UnexportedType>(m, "UnexportedType");
@@ -1078,6 +1208,9 @@ DeclFn(pybind11::module &m,
     v17->Update();
     v18->Update();
     v19->Update();
+    v20->Update();
+    v21->Update();
+    v22->Update();
   };
   return {update_fn};
 }

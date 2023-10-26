@@ -6,7 +6,6 @@ from typing import List, Dict
 from pylibclang import cindex
 
 from pybind11_weaver import gen_unit
-from pybind11_weaver.utils import scope_list
 
 
 def _inject_docstring(code: str, cursor: cindex.Cursor, insert_mode: str):
@@ -43,8 +42,11 @@ class Entity(abc.ABC):
         self.children[key] = value
 
     def add_child(self, child: "Entity"):
-        assert child.name not in self.children
-        self.children[child.name] = child
+        if child.name in self.children:
+            assert child.cursor.kind == cindex.CursorKind.CXCursor_Namespace
+            self.children[child.name].children.update(child.children)
+        else:
+            self.children[child.name] = child
         assert child.parent() is None
         child._parent = weakref.ref(self)
 

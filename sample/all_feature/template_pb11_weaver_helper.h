@@ -24,3 +24,9 @@ extern template std::string Foo<Q::R<int>, 8>(Q::R<int>, int);
  */
 template <> std::string Foo<float, 9>(float, int);
 extern template std::string Foo<Q::R<int>, 8>(Q::R<int>, int);
+
+namespace template_ns {
+// For template class, an extern explicit instantiation is enough.
+
+extern template class TemplateClass<int>;
+} // namespace template_ns

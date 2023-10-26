@@ -5,7 +5,7 @@ import pylibclang._C
 
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity import create_entity
-from pybind11_weaver.entity import entity_base
+from pybind11_weaver.entity import entity_base, funktion
 
 from pybind11_weaver.utils import common
 
@@ -21,8 +21,11 @@ class EntityTree:
         self.gu = gu
 
     def add_child(self, child: "Entity"):
-        assert child.name not in self.entities
-        self.entities[child.name] = child
+        if child.name in self.entities:
+            assert child.cursor.kind == cindex.CursorKind.CXCursor_Namespace
+            self.entities[child.name].children.update(child.children)
+        else:
+            self.entities[child.name] = child
         assert child.parent() is None
 
     def __getitem__(self, item):
@@ -43,6 +46,10 @@ class EntityTree:
                 return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
             parent._tu = gu.tu  # keep compatible with cindex and keep tu alive
             cursor._tu = gu.tu
+            if create_entity(gu, cursor) is None:
+                del parent._tu
+                del cursor._tu
+                return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
             if cursor.kind in mab_be_template_instance and common.is_concreate_template(cursor):
                 explicit_instantiation.add(cursor.displayname)
                 if cursor.displayname in implicit_instantiation:
@@ -72,6 +79,7 @@ class EntityTree:
         pylibclang._C.clang_visitChildren(gu.tu.cursor, visitor, pylibclang._C.voidp(0))
         init_code = "\n".join([f"{prefix} {type_name};" for prefix, type_name in implicit_instantiation.items()])
         gu.reload_tu(init_code)
+        funktion.FunctionEntity._added_func.clear()
 
     def _map_from_gu(self, gu: gen_unit.GenUnit):
         self._inject_explicit_template_instantiation(gu)
@@ -91,7 +99,7 @@ class EntityTree:
                 if new_entity is None:
                     return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
                 parent.add_child(new_entity)
-                worklist.append((new_entity.cursor, new_entity))
+                worklist.append((new_entity.cursor, parent[new_entity.name]))
             return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
 
         while len(worklist) > 0:

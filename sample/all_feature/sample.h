@@ -103,4 +103,22 @@ template <class T> struct R {};
  */
 template <class T, int N> std::string Foo(T, int) { return "Default one"; }
 
+namespace template_ns {
+
+template <class T> struct TemplateClass {
+public:
+  T Method(T *p);
+  T member;
+};
+
+template <class T> T TemplateClass<T>::Method(T *p) { return *p; }
+
+// Specialization is supported directly
+// extra binding could be enabled by using extern explicit instantiation
+template <> class TemplateClass<float> {
+public:
+  float Get() { return 0; }
+};
+} // namespace template_ns
+
 #endif // PYBIND11_WEAVER_SAMPLE_H
