@@ -9,14 +9,15 @@ from pybind11_weaver.utils import common
 
 def _get_fn_pointer_type(cursor: cindex.Cursor) -> str:
     """For libclang do not provide API to construct the pointer type, we have to construct it by ourself."""
+    ret_t = common.safe_type_reference(cursor.result_type)
+    args_t = [common.safe_type_reference(arg.type) for arg in cursor.get_arguments()]
     if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and not cursor.is_static_method():
         cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
-        ret_t = cursor.result_type.spelling
-        args_t = [arg.type.spelling for arg in cursor.get_arguments()]
+
         return f"pybind11_weaver::FnPtrT<{cls_name},{','.join([ret_t] + args_t)}>::type"
 
     else:
-        return f"pybind11_weaver::FnPtrT<void,{cursor.type.spelling}>::type"
+        return f"pybind11_weaver::FnPtrT<void,{ret_t}({','.join(args_t)})>::type"
 
 
 _wrapped_db = set()
@@ -26,23 +27,11 @@ def get_wrapped_types():
     return _wrapped_db
 
 
-_fn_used_types = set()
-
-
-def get_fn_used_types():
-    return _fn_used_types
-
-
-def _add_fn_used_types(type: cindex.Type):
-    if int(type.kind) > int(cindex.TypeKind.CXType_LastBuiltin) and "std::" not in type.spelling:
-        _fn_used_types.add(type.spelling)
-
-
 class ValueCast:
     nest_level = -1
 
     def __init__(self, c_type: cindex.Type, cpp_type: str):
-        self.c_type = c_type.get_canonical()
+        self.c_type = c_type
         self.cpp_type = cpp_type
 
     def __call__(self, value: str, **kwargs):
@@ -59,16 +48,16 @@ class CPointerToWrapped(ValueCast):
 
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
-        _wrapped_db.add(self.c_type.spelling)
+        _wrapped_db.add(common.safe_type_reference(self.c_type))
 
     def cvt(self, c_expr: str, **kwargs):
-        return f"pybind11_weaver::WrapP<{self.c_type.spelling}>({c_expr})"
+        return f"pybind11_weaver::WrapP<{common.safe_type_reference(self.c_type)}>({c_expr})"
 
 
 class WrappedToCPointer(ValueCast):
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
-        _wrapped_db.add(self.c_type.spelling)
+        _wrapped_db.add(common.safe_type_reference(self.c_type))
 
     def cvt(self, cpp_expr: str, **kwargs):
         return f"({cpp_expr})->Cptr()"
@@ -100,27 +89,29 @@ def _get_cpp_type_from_proto(proto: cindex.TypeKind.CXType_FunctionProto):
 
 
 def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValueToCValue"]:
-    c_type = c_type.get_canonical()
-    ret = c_type.spelling, lambda x: x, lambda x: x
-    if "std::function" in c_type.spelling:
-        return _get_cpp_type_from_proto(c_type.get_template_argument_type(0))
+    c_type_spelling = common.safe_type_reference(c_type)
+    ret = c_type_spelling, lambda x: x, lambda x: x
 
-    if c_type.kind == cindex.TypeKind.CXType_Pointer:
-        pointee = c_type.get_pointee().get_canonical()
+    canonical = c_type.get_canonical()
+    if c_type_spelling.startswith("std::function"):
+        return _get_cpp_type_from_proto(canonical.get_template_argument_type(0))
+
+    if canonical.kind == cindex.TypeKind.CXType_Pointer:
+        pointee = canonical.get_pointee().get_canonical()
         if pointee.kind in [cindex.TypeKind.CXType_Pointer, cindex.TypeKind.CXType_Void]:
-            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
-            return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
+            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
+            return cpp_type, CPointerToWrapped(canonical, cpp_type), WrappedToCPointer(canonical, cpp_type)
         if pointee.kind in [cindex.TypeKind.CXType_FunctionProto]:
             return _get_cpp_type_from_proto(pointee)
         # if pointee is a incompelete type, warp it
         pointee_decl = pointee.get_declaration()
         if pointee_decl.kind in [cindex.CursorKind.CXCursor_StructDecl,
                                  cindex.CursorKind.CXCursor_ClassDecl] and not pointee_decl.is_definition():
-            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type.spelling}>"
-            return cpp_type, CPointerToWrapped(c_type, cpp_type), WrappedToCPointer(c_type, cpp_type)
-        _add_fn_used_types(pointee)
+            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
+            return cpp_type, CPointerToWrapped(canonical, cpp_type), WrappedToCPointer(canonical, cpp_type)
+        common.add_used_types(pointee)
     else:
-        _add_fn_used_types(c_type)
+        common.add_used_types(canonical)
 
     return ret
 
@@ -139,24 +130,22 @@ def wrap_c_function_to_cpp(fn_name: str, ret_t: cindex.Type, args_t: List[cindex
     forward_args = []
     wrap_param = False
     for param_t, param_spelling in zip(args_t, args_names):
-        param_t = param_t.get_canonical()
         cpp_type, _, cpp_to_c = get_cpp_type(param_t)
-        if cpp_type != param_t.spelling:
+        if cpp_type != common.safe_type_reference(param_t):
             wrap_param = True
             new_params.append(f"{cpp_type} {param_spelling}")
             forward_args.append(cpp_to_c(param_spelling))
         else:
-            new_params.append(f"{param_t.spelling} {param_spelling}")
+            new_params.append(f"{common.safe_type_reference(param_t)} {param_spelling}")
             forward_args.append(param_spelling)
     ret_expr = f"{fn_name}({','.join(forward_args)})"
     if cls_name:
         ret_expr = f"self.{ret_expr}"
 
     # ret
-    ret_t = ret_t.get_canonical()
     cpp_type, c_to_cpp, _ = get_cpp_type(ret_t)
     wrap_ret = False
-    if cpp_type != ret_t.get_canonical().spelling:
+    if cpp_type != common.safe_type_reference(ret_t):
         wrap_ret = True
         ret_expr = c_to_cpp(ret_expr)
     if wrap_param or wrap_ret or force_warp:
@@ -184,9 +173,9 @@ def wrap_cpp_function_to_c(cpp_callable_name: str,
     params = []
     cpp_args = []
     for arg_t, arg_name in zip(c_args_t, c_args_names):
-        params.append(f"{arg_t.get_canonical().spelling} {arg_name}")
+        params.append(f"{common.safe_type_reference(arg_t)} {arg_name}")
         cpp_type, c_to_cpp, _ = get_cpp_type(arg_t)
-        if cpp_type != arg_t.spelling:
+        if cpp_type != common.safe_type_reference(arg_t):
             cpp_args.append(c_to_cpp(arg_name))
         else:
             cpp_args.append(arg_name)
@@ -197,7 +186,7 @@ def wrap_cpp_function_to_c(cpp_callable_name: str,
     cpp_type_list = [cpp_type_list[0]] + cpp_type_list[1]
     cpp_type_list_str = ','.join(cpp_type_list)
 
-    if cpp_type != c_ret_t.spelling:
+    if cpp_type != common.safe_type_reference(c_ret_t):
         ret_expr = cpp_to_c(ret_expr)
 
     c_wrapper = __cpp_function_to_c_template.format(
@@ -207,7 +196,7 @@ def wrap_cpp_function_to_c(cpp_callable_name: str,
         ret_expr=ret_expr)
 
     fn_wrapper_t = f"pybind11_weaver::FnPointerWrapper<{cpp_type_list_str}>"
-    c_fn_sig = f"{','.join([t.get_canonical().spelling for t in [c_ret_t] + c_args_t])}"
+    c_fn_sig = f"{','.join([common.safe_type_reference(t) for t in [c_ret_t] + c_args_t])}"
     return f"""{fn_wrapper_t}::GetCptr<{c_fn_sig}>::Run({cpp_callable_name}, pybind11_weaver::Guardian() , {c_wrapper}, 
 /* clang-format off */
 __DATE__ __TIME__ __FILE__, 
@@ -223,7 +212,7 @@ def _fn_template_arg_name(cursor, idx, as_python_name=False) -> Optional[str]:
         if as_python_name:
             return common.type_python_name(cursor.get_template_argument_type(idx).spelling)
         else:
-            return cursor.get_template_argument_type(idx).spelling
+            return common.safe_type_reference(cursor.get_template_argument_type(idx))
     raise NotImplementedError(f"template argument kind {cursor.get_template_argument_kind(idx)} not supported")
 
 
@@ -255,7 +244,8 @@ def fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
 def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
-        cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
+        cursor.semantic_parent._tu = cursor._tu
+        cls_name = common.safe_type_reference(cursor.semantic_parent.type)
     ref_name = fn_ref_name(cursor)
     wrapper = wrap_c_function_to_cpp(ref_name,
                                      cursor.result_type,

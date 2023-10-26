@@ -87,7 +87,7 @@ class GenMethod:
     @staticmethod
     def is_virtual(cursor: cindex.Cursor):
         if cursor.is_virtual_method() or cursor.is_pure_virtual_method():
-            _logger.warning(
+            _logger.info(
                 f"virtual method {fn.fn_ref_name(cursor)} at at {cursor.location.file}:{cursor.location.line} is not fully supported yet.")
             return True
         return False
@@ -108,7 +108,8 @@ class GenMethod:
                 return [], []
             else:
                 extra_codes.append("\n".join(using_decls))
-            if is_explicit_instantiation(root_cursor):
+            if root_cursor.location.file.name == kls_entity.gu.unsaved_file[0] or is_explicit_instantiation(
+                    root_cursor):
                 root_cursor = template_cursor
         for cursor in root_cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and kls_entity.is_pubic(

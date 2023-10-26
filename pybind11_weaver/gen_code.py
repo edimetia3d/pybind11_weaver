@@ -5,7 +5,7 @@ import shutil
 from pybind11_weaver.entity import entity_base, klass
 from pybind11_weaver import entity_tree
 from pybind11_weaver import gen_unit
-from pybind11_weaver.utils import fn
+from pybind11_weaver.utils import fn, common
 
 entity_template = """
 #ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
@@ -97,7 +97,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
         entity = entities[key]
         assert entity is not None
         if isinstance(entity, klass.ClassEntity):
-            exported_type.append(entity.cursor.type.spelling)
+            exported_type.append(common.safe_type_reference(entity.cursor.type))
         entity_obj_sym = f"v{next_id}"
         entity_struct_name = "Entity_" + entity.get_pb11weaver_struct_name()
         # generate body
@@ -187,7 +187,7 @@ def gen_wrapped_pointer_code() -> str:
 
 
 def gen_ensure_code(exported_types: List[str]) -> str:
-    used_types = fn.get_fn_used_types()
+    used_types = common.get_used_types()
     ensure_code = []
     for type in sorted(used_types):
         if type not in exported_types:

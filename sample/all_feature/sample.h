@@ -119,6 +119,11 @@ template <> class TemplateClass<float> {
 public:
   float Get() { return 0; }
 };
+
+class DerivedClass : public TemplateClass<double> {
+public:
+  double Derived() { return 0; }
+};
 } // namespace template_ns
 
 #endif // PYBIND11_WEAVER_SAMPLE_H

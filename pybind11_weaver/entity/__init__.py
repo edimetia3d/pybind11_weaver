@@ -33,13 +33,13 @@ def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     """
     kind = cursor.kind
 
-    if kind == _KIND.CXCursor_EnumDecl:
+    if kind == _KIND.CXCursor_EnumDecl and cursor.is_definition():
         return enum.EnumEntity(gu, cursor)
     if kind == _KIND.CXCursor_Namespace:
         return namespace.NamespaceEntity(gu, cursor)
     if kind in [_KIND.CXCursor_ClassDecl,
                 _KIND.CXCursor_StructDecl] and cursor.is_definition():
-            return klass.ClassEntity(gu, cursor)
+        return klass.ClassEntity(gu, cursor)
     if kind == _KIND.CXCursor_FunctionDecl:
         if common.is_operator_overload(cursor):
             pass  # handle later

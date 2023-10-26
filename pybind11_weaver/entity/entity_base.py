@@ -1,11 +1,14 @@
 import abc
 import functools
 import weakref
-from typing import List, Dict
+import logging
+from typing import Dict
 
 from pylibclang import cindex
 
 from pybind11_weaver import gen_unit
+
+_logger = logging.getLogger(__name__)
 
 
 def _inject_docstring(code: str, cursor: cindex.Cursor, insert_mode: str):
@@ -43,8 +46,11 @@ class Entity(abc.ABC):
 
     def add_child(self, child: "Entity"):
         if child.name in self.children:
-            assert child.cursor.kind == cindex.CursorKind.CXCursor_Namespace
-            self.children[child.name].children.update(child.children)
+            if child.cursor.kind == cindex.CursorKind.CXCursor_Namespace:
+                assert len(child.children) == 0
+            else:
+                _logger.warning(
+                    f"Entity at {child.cursor.location} already exists, skip, previous one is {self.children[child.name].cursor.location}")
         else:
             self.children[child.name] = child
         assert child.parent() is None

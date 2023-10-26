@@ -12,11 +12,11 @@ _logger = logging.getLogger(__name__)
 
 
 def _is_bindable_type(type: cindex.Type):
-    type = type.get_canonical()
-    if type.kind in [cindex.TypeKind.CXType_ConstantArray, cindex.TypeKind.CXType_IncompleteArray,
-                     cindex.TypeKind.CXType_VariableArray]:
+    canonical = type.get_canonical()
+    if canonical.kind in [cindex.TypeKind.CXType_ConstantArray, cindex.TypeKind.CXType_IncompleteArray,
+                          cindex.TypeKind.CXType_VariableArray]:
         return False
-    if fn.get_cpp_type(type)[0] != type.spelling:
+    if fn.get_cpp_type(canonical)[0] != canonical.spelling:
         return False
     return True
 

@@ -59,7 +59,7 @@ class ClassEntity(entity_base.Entity):
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
                 if self.is_pubic(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
-                    param_types = [arg.type.spelling for arg in cursor.get_arguments()]
+                    param_types = [common.safe_type_reference(arg.type) for arg in cursor.get_arguments()]
                     ctor_found = True
                     codes.append(
                         f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
@@ -70,7 +70,20 @@ class ClassEntity(entity_base.Entity):
         return codes
 
     def default_pybind11_type_str(self) -> str:
-        return f"pybind11::class_<{self.reference_name()}>"
+        t_param_list = [self.reference_name()]
+        base_class = None
+        for cursor in self.cursor.get_children():
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXBaseSpecifier:
+                if base_class is not None:
+                    base_class = None
+                    _logger.warning(
+                        f"Multiple inheritance not supported `{self.cursor.type.spelling}`, base class ignored")
+                    break
+                base_class = cursor.type
+        if base_class is not None:
+            common.add_used_types(base_class)
+            t_param_list.append(common.safe_type_reference(base_class))
+        return f"pybind11::class_<{','.join(t_param_list)}>"
 
     def extra_code(self) -> str:
         """Entity may inject extra code into the generated binding struct."""
