@@ -13,11 +13,11 @@ from . import klass
 _logger = logging.getLogger(__name__)
 
 _def_bind_method = """
-virtual void BindMethod_{method_identifier}(Pybind11T & obj){{
+virtual void BindMethod_{method_identifier}(){{
     {bind_expr};
 }}
 """
-_call_bind_method = """BindMethod_{method_identifier}(obj);"""
+_call_bind_method = """BindMethod_{method_identifier}();"""
 
 
 class Method:
@@ -28,11 +28,11 @@ class Method:
         self.bind_name = fn.fn_python_name(fn_cursor)
         self.identifier_name = identifier_name
 
-    def get_def_stmt(self):
+    def get_def_stmt(self, pybind11_obj_sym: str):
         fn_ptr = fn.get_fn_value_expr(self.fn_cursor)
         bind_expr = ""
         if fn_ptr is not None:
-            bind_expr = f"obj.{self.get_def_type()}(\"{self.bind_name}\",{fn.get_fn_value_expr(self.fn_cursor)})"
+            bind_expr = f"{pybind11_obj_sym}.{self.get_def_type()}(\"{self.bind_name}\",{fn.get_fn_value_expr(self.fn_cursor)})"
             if self.inect_docstring:
                 bind_expr = entity_base._inject_docstring(
                     bind_expr, self.fn_cursor, "last_arg")
@@ -129,16 +129,8 @@ class GenMethod:
         method_bind_body = []
         for _, method in methods.items():
             call_method_bind.append(method.get_call_stmt())
-            method_bind_body.append(method.get_def_stmt())
-        new_line = "\n"
-        bind_all = f"""
-        void Pybind11WeaverBindAllMethods(Pybind11T & obj){{
-           {new_line.join(call_method_bind)}
-        }}
+            method_bind_body.append(method.get_def_stmt(pybind11_obj_sym))
 
-        {new_line.join(method_bind_body)}
-"""
-
-        codes.append(f"Pybind11WeaverBindAllMethods({pybind11_obj_sym});")
-        extra_codes.append(bind_all)
+        codes.extend(call_method_bind)
+        extra_codes.extend(method_bind_body)
         return codes, extra_codes

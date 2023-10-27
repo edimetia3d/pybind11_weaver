@@ -9,43 +9,33 @@ from pybind11_weaver.utils import fn, common
 
 entity_template = """
 #ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
-template <class Pybind11T> struct {bind_struct_name} : public EntityBase {{
+template <class Pybind11T={handle_type}> struct {bind_struct_name} : public EntityBase {{
   using Pybind11Type = Pybind11T;
+  {extra_code} 
   
-  {extra_code}
-
-  explicit {bind_struct_name}(EntityScope parent_h){{}}
-
-  virtual void Bind(Pybind11T &pb11_obj) {{
-    {binding_stmts} 
-  }}
+  explicit {bind_struct_name}(EntityScope parent_h): handle{{ {init_handle_expr} }}
+  {{}}
   
-  static const char * Key(){{ 
-    return {unique_struct_key};
-  }}
-    
-}};
-
-
-struct {entity_struct_name} : public {bind_struct_name}<std::decay_t<{handle_type}>> {{
-
-  explicit {entity_struct_name}(EntityScope parent_h):
-  {bind_struct_name}<std::decay_t<{handle_type}>>(parent_h),
-  handle{{ {init_handle_expr} }}
-  {{
-  }}
+  template<class... HandleArgsT>
+  explicit {bind_struct_name}(EntityScope parent_h, HandleArgsT&&... args):handle{{std::forward(args)...}}
+  {{}}
   
   void Update() override {{
-    Bind(handle);
+   {binding_stmts} 
   }}
   
   EntityScope AsScope() override {{
     return EntityScope(handle);
   }}
   
-  {handle_type} handle;
-    
+  static const char * Key(){{ 
+    return {unique_struct_key};
+  }}
+   
+  Pybind11Type handle; 
 }};
+
+using {entity_struct_name} = {bind_struct_name}<>;
 
 #else
 
@@ -117,7 +107,7 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
             bind_struct_name="Bind_" + entity.get_pb11weaver_struct_name(),
             parent_expr=parent_sym,
             init_handle_expr=entity.init_default_pybind11_value("parent_h"),
-            binding_stmts="\n".join(entity.update_stmts("pb11_obj")),
+            binding_stmts="\n".join(entity.update_stmts("handle")),
             unique_struct_key=f"\"{entity.get_pb11weaver_struct_name()}\"",
             extra_code=entity.extra_code())
         entity_struct_decls.append(struct_decl)
