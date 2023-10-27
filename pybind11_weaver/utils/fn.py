@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 from pylibclang import cindex
 
@@ -52,9 +52,9 @@ def get_wrapped_types():
 class ValueCast:
     nest_level = -1
 
-    def __init__(self, c_type: cindex.Type, cpp_type: str):
+    def __init__(self, c_type: cindex.Type, pb11_type: str):
         self.c_type = c_type
-        self.cpp_type = cpp_type
+        self.pb11_type = pb11_type
 
     def __call__(self, value: str, **kwargs):
         self.nest_level += 1
@@ -66,73 +66,89 @@ class ValueCast:
         pass
 
 
-class CPointerToWrapped(ValueCast):
+class NoCast(ValueCast):
+    def cvt(self, value: str, **kwargs):
+        return value
+
+
+class PointerToPb11Value(ValueCast):
 
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
         _wrapped_db.add(common.safe_type_reference(self.c_type))
 
-    def cvt(self, c_expr: str, **kwargs):
-        return f"pybind11_weaver::WrapP<{common.safe_type_reference(self.c_type)}>({c_expr})"
+    def cvt(self, c_value: str, **kwargs):
+        return f"pybind11_weaver::WrapP<{common.safe_type_reference(self.c_type)}>({c_value})"
 
 
-class WrappedToCPointer(ValueCast):
+class Pb11ValueToPointer(ValueCast):
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
         _wrapped_db.add(common.safe_type_reference(self.c_type))
 
-    def cvt(self, cpp_expr: str, **kwargs):
-        return f"({cpp_expr})->Cptr()"
+    def cvt(self, pb11_value: str, **kwargs):
+        return f"({pb11_value})->Cptr()"
 
 
-class CFnPointerToCppStdFn(ValueCast):
+class FnPointerToPb11Fn(ValueCast):
 
-    def cvt(self, c_expr: str, **kwargsk):
+    def cvt(self, callable_with_c_type: str, **kwargsk):
+        if "capture_list" in kwargsk:
+            capture_list = kwargsk["capture_list"]
+        else:
+            capture_list = ""
         assert self.c_type.kind == cindex.TypeKind.CXType_FunctionProto
-        return wrap_c_function_to_cpp(f"({c_expr})", self.c_type.get_result(),
-                                      [d for d in self.c_type.argument_types()],
-                                      [f"arg{self.nest_level}_{i}" for i, _ in enumerate(self.c_type.argument_types())],
-                                      force_warp=True)
+        return wrap_c_callable_in_pb11_type_io(f"({callable_with_c_type})",
+                                               self.c_type.get_result(),
+                                               [d for d in self.c_type.argument_types()],
+                                               [f"arg{self.nest_level}_{i}" for i, _ in
+                                                enumerate(self.c_type.argument_types())],
+                                               capture_list,
+                                               force_wrap=True)
 
 
-class CppStdFnToCFnPointer(ValueCast):
+class Pb11FnToFnPointer(ValueCast):
 
-    def cvt(self, cpp_expr: str, **kwargs):
+    def cvt(self, callable_with_pb11_type: str, **kwargs):
         assert self.c_type.kind == cindex.TypeKind.CXType_FunctionProto
-        return wrap_cpp_function_to_c(f"({cpp_expr})", self.c_type.get_result(),
-                                      [d for d in self.c_type.argument_types()],
-                                      [f"arg{self.nest_level}_{i}" for i, _ in enumerate(self.c_type.argument_types())])
+        return wrap_pb11_fn_in_c_type_io(f"({callable_with_pb11_type})", self.c_type.get_result(),
+                                         [d for d in self.c_type.argument_types()],
+                                         [f"arg{self.nest_level}_{i}" for i, _ in
+                                          enumerate(self.c_type.argument_types())])
 
 
-def _get_cpp_type_from_proto(proto: cindex.TypeKind.CXType_FunctionProto):
-    ret_t, args_t = c_function_sig_to_cpp_function_sig(proto.get_result(), proto.argument_types())
-    cpp_type = f"std::function<{ret_t} ({','.join(args_t)})>"
-    return cpp_type, CFnPointerToCppStdFn(proto, cpp_type), CppStdFnToCFnPointer(proto, cpp_type)
+def _proto_to_pb11_type(proto: cindex.TypeKind.CXType_FunctionProto):
+    ret_t, args_t, casted = _c_io_type_to_pb11_io_type(proto.get_result(), proto.argument_types())
+    if casted:
+        pb11_type = f"std::function<{ret_t} ({','.join(args_t)})>"
+        return pb11_type, FnPointerToPb11Fn(proto, pb11_type), Pb11FnToFnPointer(proto, pb11_type)
+    else:
+        fn_ptr_t = f"{ret_t} (*)({','.join(args_t)})"
+        return fn_ptr_t, NoCast(proto, fn_ptr_t), NoCast(proto, fn_ptr_t)
 
 
-def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValueToCValue"]:
+def get_pb11_type(c_type: cindex.Type) -> Tuple[str, "CValuePb11Value", "Pb11ValueToCValue"]:
     c_type_spelling = common.safe_type_reference(c_type)
-    ret = c_type_spelling, lambda x: x, lambda x: x
-
     canonical = c_type.get_canonical()
+    ret = c_type_spelling, NoCast(canonical, c_type_spelling), NoCast(canonical, c_type_spelling)
+
     if c_type_spelling.startswith("std::function"):
-        _get_cpp_type_from_proto(
+        return _proto_to_pb11_type(
             canonical.get_template_argument_type(0))  # only make sure all types are insert to used_types
-        return ret
 
     if canonical.kind == cindex.TypeKind.CXType_Pointer:
         pointee = canonical.get_pointee().get_canonical()
         if pointee.kind in [cindex.TypeKind.CXType_Pointer, cindex.TypeKind.CXType_Void]:
-            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
-            return cpp_type, CPointerToWrapped(canonical, cpp_type), WrappedToCPointer(canonical, cpp_type)
+            pb11_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
+            return pb11_type, PointerToPb11Value(canonical, pb11_type), Pb11ValueToPointer(canonical, pb11_type)
         if pointee.kind in [cindex.TypeKind.CXType_FunctionProto]:
-            return _get_cpp_type_from_proto(pointee)
-        # if pointee is a incompelete type, warp it
+            return _proto_to_pb11_type(pointee)
+        # if pointee is a incompelete type, wrap it
         pointee_decl = pointee.get_declaration()
         if pointee_decl.kind in [cindex.CursorKind.CXCursor_StructDecl,
                                  cindex.CursorKind.CXCursor_ClassDecl] and not pointee_decl.is_definition():
-            cpp_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
-            return cpp_type, CPointerToWrapped(canonical, cpp_type), WrappedToCPointer(canonical, cpp_type)
+            pb11_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
+            return pb11_type, PointerToPb11Value(canonical, pb11_type), Pb11ValueToPointer(canonical, pb11_type)
         common.add_used_types(pointee)
     else:
         common.add_used_types(canonical)
@@ -140,13 +156,17 @@ def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValu
     return ret
 
 
-__c_function_to_cpp_template = """[]({params}){{
-    return {ret_expr};
+__c_callable_inside = """[{capture_list}]({params}){{
+    {ret_expr};
 }}"""
 
 
-def wrap_c_function_to_cpp(fn_name: str, ret_t: cindex.Type, args_t: List[cindex.Type], args_names: List[str],
-                           cls_name: str = None, force_warp=False):
+def wrap_c_callable_in_pb11_type_io(c_callable_name: str, ret_t: cindex.Type, args_t: List[cindex.Type],
+                                    args_names: List[str],
+                                    capture_list: Union[str, None],
+                                    cls_name: str = None, force_wrap=False, is_static=False):
+    if capture_list is None:
+        capture_list = ""
     # param and forwarded args
     new_params = []
     if cls_name:
@@ -154,74 +174,88 @@ def wrap_c_function_to_cpp(fn_name: str, ret_t: cindex.Type, args_t: List[cindex
     forward_args = []
     wrap_param = False
     for param_t, param_spelling in zip(args_t, args_names):
-        cpp_type, _, cpp_to_c = get_cpp_type(param_t)
-        if cpp_type != common.safe_type_reference(param_t):
-            wrap_param = True
-            new_params.append(f"{cpp_type} {param_spelling}")
-            forward_args.append(cpp_to_c(param_spelling))
-        else:
+        pb11_type, _, pb11_value_to_c = get_pb11_type(param_t)
+        if isinstance(pb11_value_to_c, NoCast):
             new_params.append(f"{common.safe_type_reference(param_t)} {param_spelling}")
             forward_args.append(param_spelling)
-    ret_expr = f"{fn_name}({','.join(forward_args)})"
-    if cls_name:
-        ret_expr = f"self.{ret_expr}"
+        else:
+            wrap_param = True
+            new_params.append(f"{pb11_type} {param_spelling}")
+            forward_args.append(pb11_value_to_c(param_spelling))
+
+    if cls_name and not is_static:
+        forward_args = [c_callable_name, "&self"] + forward_args
+    else:
+        forward_args = [c_callable_name] + forward_args
+    ret_expr = f"std::invoke({','.join(forward_args)})"
 
     # ret
-    cpp_type, c_to_cpp, _ = get_cpp_type(ret_t)
+    _, c_value_to_pb11, _ = get_pb11_type(ret_t)
     wrap_ret = False
-    if cpp_type != common.safe_type_reference(ret_t):
+    ret_t_is_void = ret_t.kind == cindex.TypeKind.CXType_Void
+    if not ret_t_is_void and not isinstance(c_value_to_pb11, NoCast):
         wrap_ret = True
-        ret_expr = c_to_cpp(ret_expr)
-    if wrap_param or wrap_ret or force_warp:
-        return __c_function_to_cpp_template.format(params=','.join(new_params), ret_expr=ret_expr)
+        ret_expr = f"auto && __ret__ = {ret_expr} ; return {c_value_to_pb11('__ret__', capture_list='__ret__=std::move(__ret__)')}"
+    else:
+        ret_expr = f"return {ret_expr}"
+    if wrap_param or wrap_ret or force_wrap:
+        return __c_callable_inside.format(params=','.join(new_params), ret_expr=ret_expr, capture_list=capture_list)
     else:
         return None
 
 
-__cpp_function_to_c_template = """[]({params}){{
-    auto to_call = pybind11_weaver::FnPointerWrapper<{cpp_type_list}>::GetFnProxy(__DATE__ __TIME__ __FILE__ , __COUNTER__);
-    return {ret_expr};
+__pb11_callable_inside = """[]({params}){{
+    auto to_call = pybind11_weaver::FnPointerWrapper<{pb11_io_type}>::GetFnProxy(__DATE__ __TIME__ __FILE__ , __COUNTER__);
+    {ret_expr};
 }}"""
 
 
-def c_function_sig_to_cpp_function_sig(c_ret_t, c_args_t) -> Tuple[str, List[str]]:
-    ret_cpp_t = get_cpp_type(c_ret_t)[0]
-    args_cpp_t = [get_cpp_type(a)[0] for a in c_args_t]
-    return ret_cpp_t, args_cpp_t
+def _c_io_type_to_pb11_io_type(c_ret_t, c_args_t) -> Tuple[str, List[str], bool]:
+    ret_pb11_t, c_to_pb11, _ = get_pb11_type(c_ret_t)
+    py11_args_t = []
+    casted = not isinstance(c_to_pb11, NoCast)
+    for a in c_args_t:
+        pb11_t, _, _ = get_pb11_type(a)
+        py11_args_t.append(pb11_t)
+        casted = casted or not isinstance(c_to_pb11, NoCast)
+
+    return ret_pb11_t, py11_args_t, casted
 
 
-def wrap_cpp_function_to_c(cpp_callable_name: str,
-                           c_ret_t: cindex.Type,
-                           c_args_t: List[cindex.Type],
-                           c_args_names: List[str]):
+def wrap_pb11_fn_in_c_type_io(pb11_callable_name: str,
+                              c_ret_t: cindex.Type,
+                              c_args_t: List[cindex.Type],
+                              c_args_names: List[str]):
     params = []
-    cpp_args = []
+    forward_args = []
     for arg_t, arg_name in zip(c_args_t, c_args_names):
         params.append(f"{common.safe_type_reference(arg_t)} {arg_name}")
-        cpp_type, c_to_cpp, _ = get_cpp_type(arg_t)
-        if cpp_type != common.safe_type_reference(arg_t):
-            cpp_args.append(c_to_cpp(arg_name))
+        pb11_type, c_value_to_pb11, _ = get_pb11_type(arg_t)
+        if isinstance(c_value_to_pb11, NoCast):
+            forward_args.append(arg_name)
         else:
-            cpp_args.append(arg_name)
+            forward_args.append(c_value_to_pb11(arg_name, capture_list=f"{arg_name}"))
 
-    ret_expr = f"to_call({','.join(cpp_args)})"
-    cpp_type, _, cpp_to_c = get_cpp_type(c_ret_t)
-    cpp_type_list = c_function_sig_to_cpp_function_sig(c_ret_t, c_args_t)
-    cpp_type_list = [cpp_type_list[0]] + cpp_type_list[1]
-    cpp_type_list_str = ','.join(cpp_type_list)
+    ret_expr = f"to_call({','.join(forward_args)})"
+    pb11_ret_type, _, pb11_value_to_c = get_pb11_type(c_ret_t)
+    pb11_io_t = _c_io_type_to_pb11_io_type(c_ret_t, c_args_t)
+    pb11_io_t = [pb11_io_t[0]] + pb11_io_t[1]
+    pb11_io_t_str = ','.join(pb11_io_t)
 
-    if cpp_type != common.safe_type_reference(c_ret_t):
-        ret_expr = cpp_to_c(ret_expr)
+    ret_t_is_void = c_ret_t.kind == cindex.TypeKind.CXType_Void
+    if not ret_t_is_void and not isinstance(pb11_value_to_c, NoCast):
+        ret_expr = f"auto && __pb11_ret__= ret_expr; return {pb11_value_to_c('__pb11_ret__')}"
+    else:
+        ret_expr = f"return {ret_expr}"
 
-    c_wrapper = __cpp_function_to_c_template.format(
+    c_wrapper = __pb11_callable_inside.format(
         params=','.join(params),
-        cpp_args=','.join(cpp_args),
-        cpp_type_list=cpp_type_list_str,
+        pb11_io_type=pb11_io_t_str,
         ret_expr=ret_expr)
 
-    fn_wrapper_t = f"pybind11_weaver::FnPointerWrapper<{cpp_type_list_str}>"
+    fn_wrapper_t = f"pybind11_weaver::FnPointerWrapper<{pb11_io_t_str}>"
     c_fn_sig = f"{','.join([common.safe_type_reference(t) for t in [c_ret_t] + c_args_t])}"
-    return f"""{fn_wrapper_t}::GetCptr<{c_fn_sig}>::Run({cpp_callable_name}, pybind11_weaver::Guardian() , {c_wrapper}, 
+    return f"""{fn_wrapper_t}::GetCptr<{c_fn_sig}>::Run({pb11_callable_name}, pybind11_weaver::Guardian() , {c_wrapper}, 
 /* clang-format off */
 __DATE__ __TIME__ __FILE__, 
 __COUNTER__ - 1
@@ -268,22 +302,25 @@ def fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
 def get_fn_value_expr(cursor: cindex.Cursor) -> Optional[str]:
     if is_types_has_unique_ptr([arg.type for arg in cursor.get_arguments()] + [cursor.result_type]):
         return None
+    fn_t = _get_fn_pointer_type(cursor)
+    if fn_t is None:
+        return None
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
         cursor.semantic_parent._tu = cursor._tu
         cls_name = common.safe_type_reference(cursor.semantic_parent.type)
+    is_static = cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and cursor.is_static_method()
+
     ref_name = fn_ref_name(cursor)
-    wrapper = wrap_c_function_to_cpp(ref_name,
-                                     cursor.result_type,
-                                     [arg.type for arg in cursor.get_arguments()],
-                                     [arg.spelling if arg.spelling != '' else f"arg{i}" for i, arg in
-                                      enumerate(cursor.get_arguments())],
-                                     cls_name)
+    fn_ptr = f"static_cast<{fn_t}>(&{ref_name})"
+    wrapper = wrap_c_callable_in_pb11_type_io(fn_ptr,
+                                              cursor.result_type,
+                                              [arg.type for arg in cursor.get_arguments()],
+                                              [arg.spelling if arg.spelling != '' else f"arg{i}" for i, arg in
+                                               enumerate(cursor.get_arguments())],
+                                              None,
+                                              cls_name, is_static=is_static)
     if wrapper:
         return wrapper
     else:
-        fn_t = _get_fn_pointer_type(cursor)
-        if fn_t is None:
-            return None
-        else:
-            return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{ref_name})"
+        return fn_ptr
