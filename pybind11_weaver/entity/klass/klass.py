@@ -1,11 +1,11 @@
-from typing import List, Dict
+from typing import List
 import logging
 
 import pylibclang._C
 from pylibclang import cindex
 
 from pybind11_weaver.entity import entity_base
-from pybind11_weaver.utils import common, scope_list, fn
+from pybind11_weaver.utils import common, scope_list
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity.klass import method, field
 
@@ -45,14 +45,15 @@ class ClassEntity(entity_base.Entity):
             cursor, self.gu.io_config.strict_visibility_mode)
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
-        codes = self._gen_ctor(pybind11_obj_sym)
 
-        # generate method binding
-        new_codes, new_extra = method.GenMethod(self).run(pybind11_obj_sym)
+        # generate method binding first, because it will inject template argument using decl
+        codes, new_extra = method.GenMethod(self).run(pybind11_obj_sym)
+        self.extra_methods_codes.extend(new_extra)
+
+        new_codes, new_extra = self._gen_ctor(pybind11_obj_sym)
         codes.extend(new_codes)
         self.extra_methods_codes.extend(new_extra)
 
-        # generate field binding
         new_codes, new_extra = field.GenFiled(self).run(pybind11_obj_sym)
         codes.extend(new_codes)
         self.extra_methods_codes.extend(new_extra)
@@ -61,21 +62,40 @@ class ClassEntity(entity_base.Entity):
 
     def _gen_ctor(self, pybind11_obj_sym: str):
         codes = []
-        ctor_found = False
+        extra = []
+
+        def add_ctor(cursor, pybind11_obj_sym: str, id: int):
+            param_types = [arg.type for arg in cursor.get_arguments()]
+            disable_mark = f"PB11_WEAVER_DISABLE_{self.get_pb11weaver_struct_name()}_Ctor{id}"
+            if common.is_types_has_unique_ptr(param_types):
+                disable_bind = f"#define {disable_mark}"
+            else:
+                disable_bind = ""
+            codes.append(f"AddCtor{id}();")
+            param_types = [common.safe_type_reference(arg.type) for arg in cursor.get_arguments()]
+            comment = self.cursor.raw_comment
+            should_add = self.gu.io_config.gen_docstring and comment is not None
+            comment = f'R"_pb11_weaver({comment})_pb11_weaver"' if comment else "nullptr"
+            new_extra = f"""
+virtual const char * AddCtor{id}(){{
+    const char * _pb11_weaver_comment_str = {comment};
+    {disable_bind}
+#ifndef {disable_mark}
+    {pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>(){',_pb11_weaver_comment_str' if should_add else ''});
+#endif
+    return _pb11_weaver_comment_str;
+}}
+"""
+            extra.append(new_extra)
+
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
                 if self.could_export(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
-                    param_types = [arg.type for arg in cursor.get_arguments()]
-                    if not fn.is_types_has_unique_ptr(param_types):
-                        param_types = [common.safe_type_reference(t) for t in param_types]
-                        ctor_found = True
-                        codes.append(
-                            f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
-                        if self.gu.io_config.gen_docstring:
-                            codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
-        if not ctor_found:
+                    add_ctor(cursor, pybind11_obj_sym, len(codes))
+
+        if len(codes) == 0:
             codes.append(f"pybind11_weaver::TryAddDefaultCtor<{self.reference_name()}>({pybind11_obj_sym});")
-        return codes
+        return codes, extra
 
     def default_pybind11_type_str(self) -> str:
         t_param_list = [self.reference_name()]

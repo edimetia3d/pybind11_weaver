@@ -13,30 +13,39 @@ from . import klass
 _logger = logging.getLogger(__name__)
 
 _def_bind_method = """
-virtual void BindMethod_{method_identifier}(){{
-    {bind_expr};
+virtual const char * AddMethod_{method_identifier}(){{
+    {bind_code}
 }}
 """
-_call_bind_method = """BindMethod_{method_identifier}();"""
+_call_bind_method = """AddMethod_{method_identifier}();"""
 
 
 class Method:
 
-    def __init__(self, fn_cursor: cindex.Cursor, inject_docstring: bool, identifier_name: str):
+    def __init__(self, fn_cursor: cindex.Cursor, inject_docstring: bool, bind_name: str, identifier_name: str,
+                 disable_mark: str):
         self.inect_docstring = inject_docstring
         self.fn_cursor = fn_cursor
-        self.bind_name = fn.fn_python_name(fn_cursor)
+        self.bind_name = bind_name
         self.identifier_name = identifier_name
+        self.disable_mark = disable_mark
 
     def get_def_stmt(self, pybind11_obj_sym: str):
         fn_ptr = fn.get_fn_value_expr(self.fn_cursor)
-        bind_expr = ""
-        if fn_ptr is not None:
-            bind_expr = f"{pybind11_obj_sym}.{self.get_def_type()}(\"{self.bind_name}\",{fn.get_fn_value_expr(self.fn_cursor)})"
-            if self.inect_docstring:
-                bind_expr = entity_base._inject_docstring(
-                    bind_expr, self.fn_cursor, "last_arg")
-        return _def_bind_method.format(method_identifier=self.identifier_name, bind_expr=bind_expr)
+        disable_bind = f"#define {self.disable_mark}" if fn_ptr is None else ""
+        comment = self.fn_cursor.raw_comment
+        should_add = self.inect_docstring and comment is not None
+        comment = f'R"_pb11_weaver({comment})_pb11_weaver"' if comment else "nullptr"
+
+        bind_code = f"""
+const char * _pb11_weaver_comment_str = {comment};
+{disable_bind}
+#ifndef {self.disable_mark}
+{pybind11_obj_sym}.{self.get_def_type()}(\"{self.bind_name}\",{fn_ptr}{',_pb11_weaver_comment_str' if should_add else ''});
+#endif
+return _pb11_weaver_comment_str;
+"""
+        return _def_bind_method.format(method_identifier=self.identifier_name, bind_code=bind_code)
 
     def get_call_stmt(self):
         return _call_bind_method.format(method_identifier=self.identifier_name)
@@ -123,7 +132,9 @@ class GenMethod:
                     unique_name += str(self.added_method[bind_name])
                 self.added_method[bind_name] += 1
                 self.is_virtual(cursor)  # print warning
-                methods[unique_name] = Method(cursor, kls_entity.gu.io_config.gen_docstring, unique_name)
+                disable_mark = f"PB11_WEAVER_DISABLE_{self.kls_entity.get_pb11weaver_struct_name()}_{unique_name}"
+                methods[unique_name] = Method(cursor, kls_entity.gu.io_config.gen_docstring, bind_name, unique_name,
+                                              disable_mark)
 
         call_method_bind = []
         method_bind_body = []

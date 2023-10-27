@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List
 
 from pylibclang import cindex
 import pylibclang._C
@@ -74,3 +74,10 @@ def remove_const_ref_pointer(type: cindex.Type):
         return remove_const_ref_pointer(type.get_pointee())
     else:
         return type
+
+
+def is_types_has_unique_ptr(types: List[cindex.Type]):
+    for t in types:
+        if "std::unique_ptr" in safe_type_reference(t):
+            return True
+    return False

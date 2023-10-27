@@ -7,13 +7,6 @@ from . import scope_list
 from pybind11_weaver.utils import common
 
 
-def is_types_has_unique_ptr(types: List[cindex.Type]):
-    for t in types:
-        if "std::unique_ptr" in common.safe_type_reference(t):
-            return True
-    return False
-
-
 def _get_fn_pointer_type(cursor: cindex.Cursor) -> Optional[str]:
     assert cursor.type.kind == cindex.TypeKind.CXType_FunctionProto
     """For libclang do not provide API to construct the pointer type, we have to construct it by ourself."""
@@ -300,7 +293,7 @@ def fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
 
 
 def get_fn_value_expr(cursor: cindex.Cursor) -> Optional[str]:
-    if is_types_has_unique_ptr([arg.type for arg in cursor.get_arguments()] + [cursor.result_type]):
+    if common.is_types_has_unique_ptr([arg.type for arg in cursor.get_arguments()] + [cursor.result_type]):
         return None
     fn_t = _get_fn_pointer_type(cursor)
     if fn_t is None:

@@ -8,7 +8,7 @@ from pybind11_weaver import gen_unit
 from pybind11_weaver.utils import fn, common
 
 entity_template = """
-#ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
+
 template <class Pybind11T={handle_type}> struct {bind_struct_name} : public EntityBase {{
   using Pybind11Type = Pybind11T;
   {extra_code} 
@@ -34,6 +34,7 @@ template <class Pybind11T={handle_type}> struct {bind_struct_name} : public Enti
    
   Pybind11Type handle; 
 }};
+#ifndef PB11_WEAVER_DISABLE_{entity_struct_name}
 
 using {entity_struct_name} = {bind_struct_name}<>;
 
