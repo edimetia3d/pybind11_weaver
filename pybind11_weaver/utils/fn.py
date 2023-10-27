@@ -7,14 +7,36 @@ from . import scope_list
 from pybind11_weaver.utils import common
 
 
-def _get_fn_pointer_type(cursor: cindex.Cursor) -> str:
+def is_types_has_unique_ptr(types: List[cindex.Type]):
+    for t in types:
+        if "std::unique_ptr" in common.safe_type_reference(t):
+            return True
+    return False
+
+
+def _get_fn_pointer_type(cursor: cindex.Cursor) -> Optional[str]:
+    assert cursor.type.kind == cindex.TypeKind.CXType_FunctionProto
     """For libclang do not provide API to construct the pointer type, we have to construct it by ourself."""
     ret_t = common.safe_type_reference(cursor.result_type)
     args_t = [common.safe_type_reference(arg.type) for arg in cursor.get_arguments()]
     if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and not cursor.is_static_method():
+        proto_spelling = cursor.type.spelling
+        if proto_spelling.endswith("const &&"):
+            return None
+        elif proto_spelling.endswith("const &"):
+            method_type = "const_lref_type"
+        elif proto_spelling.endswith("&&"):
+            return None
+        elif proto_spelling.endswith("&"):
+            method_type = "lref_type"
+        elif proto_spelling.endswith("const"):
+            method_type = "const_type"
+        else:
+            method_type = "type"
+
         cls_name = scope_list.get_full_qualified_name(cursor.semantic_parent)
 
-        return f"pybind11_weaver::FnPtrT<{cls_name},{','.join([ret_t] + args_t)}>::type"
+        return f"pybind11_weaver::FnPtrT<{cls_name},{','.join([ret_t] + args_t)}>::{method_type}"
 
     else:
         return f"pybind11_weaver::FnPtrT<void,{ret_t}({','.join(args_t)})>::type"
@@ -94,7 +116,9 @@ def get_cpp_type(c_type: cindex.Type) -> Tuple[str, "CValueToCppValue", "CppValu
 
     canonical = c_type.get_canonical()
     if c_type_spelling.startswith("std::function"):
-        return _get_cpp_type_from_proto(canonical.get_template_argument_type(0))
+        _get_cpp_type_from_proto(
+            canonical.get_template_argument_type(0))  # only make sure all types are insert to used_types
+        return ret
 
     if canonical.kind == cindex.TypeKind.CXType_Pointer:
         pointee = canonical.get_pointee().get_canonical()
@@ -241,7 +265,9 @@ def fn_ref_name(cursor: cindex.Cursor) -> Optional[str]:
     return scope_list.get_full_qualified_name(cursor, base_name=base_name)
 
 
-def get_fn_value_expr(cursor: cindex.Cursor) -> str:
+def get_fn_value_expr(cursor: cindex.Cursor) -> Optional[str]:
+    if is_types_has_unique_ptr([arg.type for arg in cursor.get_arguments()] + [cursor.result_type]):
+        return None
     cls_name = None
     if cursor.kind != cindex.CursorKind.CXCursor_FunctionDecl:
         cursor.semantic_parent._tu = cursor._tu
@@ -256,4 +282,8 @@ def get_fn_value_expr(cursor: cindex.Cursor) -> str:
     if wrapper:
         return wrapper
     else:
-        return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{ref_name})"
+        fn_t = _get_fn_pointer_type(cursor)
+        if fn_t is None:
+            return None
+        else:
+            return f"static_cast<{_get_fn_pointer_type(cursor)}>(&{ref_name})"

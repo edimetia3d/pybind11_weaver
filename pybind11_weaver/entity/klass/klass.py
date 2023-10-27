@@ -1,10 +1,11 @@
 from typing import List, Dict
 import logging
 
+import pylibclang._C
 from pylibclang import cindex
 
 from pybind11_weaver.entity import entity_base
-from pybind11_weaver.utils import common, scope_list
+from pybind11_weaver.utils import common, scope_list, fn
 from pybind11_weaver import gen_unit
 from pybind11_weaver.entity.klass import method, field
 
@@ -34,8 +35,13 @@ class ClassEntity(entity_base.Entity):
             code = entity_base._inject_docstring(code, self.cursor, "append")
         return code
 
-    def is_pubic(self, cursor: cindex.Cursor):
-        return cursor.access_specifier == cindex.AccessSpecifier.CX_CXXPublic and not cursor.is_deleted_method() and common.is_visible(
+    def could_export(self, cursor: cindex.Cursor):
+        if common.is_concreate_template(cursor):
+            template_cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
+            template_cursor._tu = cursor._tu  # keep compatible with cindex and keep tu alive
+            cursor = template_cursor
+
+        return common.is_public(cursor) and not cursor.is_deleted_method() and common.is_visible(
             cursor, self.gu.io_config.strict_visibility_mode)
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
@@ -58,13 +64,15 @@ class ClassEntity(entity_base.Entity):
         ctor_found = False
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
-                if self.is_pubic(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
-                    param_types = [common.safe_type_reference(arg.type) for arg in cursor.get_arguments()]
-                    ctor_found = True
-                    codes.append(
-                        f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
-                    if self.gu.io_config.gen_docstring:
-                        codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
+                if self.could_export(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
+                    param_types = [arg.type for arg in cursor.get_arguments()]
+                    if not fn.is_types_has_unique_ptr(param_types):
+                        param_types = [common.safe_type_reference(t) for t in param_types]
+                        ctor_found = True
+                        codes.append(
+                            f"{pybind11_obj_sym}.def(pybind11::init<{','.join(param_types)}>());")
+                        if self.gu.io_config.gen_docstring:
+                            codes[-1] = entity_base._inject_docstring(codes[-1], cursor, "last_arg")
         if not ctor_found:
             codes.append(f"pybind11_weaver::TryAddDefaultCtor<{self.reference_name()}>({pybind11_obj_sym});")
         return codes
@@ -78,9 +86,11 @@ class ClassEntity(entity_base.Entity):
                     base_class = None
                     _logger.warning(
                         f"Multiple inheritance not supported `{self.cursor.type.spelling}`, base class ignored")
-                    break
-                base_class = cursor.type
-        if base_class is not None:
+                else:
+                    base_class = cursor.type
+            if cursor.kind == cindex.CursorKind.CXCursor_Destructor and not self.could_export(cursor):
+                t_param_list.append(f"std::unique_ptr<{self.reference_name()},pybind11::nodelete>")
+        if base_class is not None and self.could_export(base_class.get_declaration()):
             common.add_used_types(base_class)
             t_param_list.append(common.safe_type_reference(base_class))
         return f"pybind11::class_<{','.join(t_param_list)}>"

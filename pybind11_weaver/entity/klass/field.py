@@ -13,12 +13,11 @@ _logger = logging.getLogger(__name__)
 
 def _is_bindable_type(type: cindex.Type):
     canonical = type.get_canonical()
-    if canonical.kind in [cindex.TypeKind.CXType_ConstantArray, cindex.TypeKind.CXType_IncompleteArray,
-                          cindex.TypeKind.CXType_VariableArray]:
-        return False
-    if fn.get_cpp_type(canonical)[0] != canonical.spelling:
-        return False
-    return True
+    if canonical.kind < cindex.TypeKind.CXType_LastBuiltin and canonical.kind > cindex.TypeKind.CXType_FirstBuiltin:
+        return True
+    if canonical.spelling in ["std::string", "char*", "const char*"]:
+        return True
+    return False
 
 
 class GenFiled:
@@ -31,7 +30,7 @@ class GenFiled:
         kls_entity = self.kls_entity
         for cursor in kls_entity.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_FieldDecl and \
-                    kls_entity.is_pubic(cursor) and \
+                    kls_entity.could_export(cursor) and \
                     _is_bindable_type(cursor.type):
                 filed_binder = "def_readwrite"
                 if cursor.type.is_const_qualified():

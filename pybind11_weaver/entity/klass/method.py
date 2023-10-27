@@ -29,10 +29,13 @@ class Method:
         self.identifier_name = identifier_name
 
     def get_def_stmt(self):
-        bind_expr = f"obj.{self.get_def_type()}(\"{self.bind_name}\",{fn.get_fn_value_expr(self.fn_cursor)})"
-        if self.inect_docstring:
-            bind_expr = entity_base._inject_docstring(
-                bind_expr, self.fn_cursor, "last_arg")
+        fn_ptr = fn.get_fn_value_expr(self.fn_cursor)
+        bind_expr = ""
+        if fn_ptr is not None:
+            bind_expr = f"obj.{self.get_def_type()}(\"{self.bind_name}\",{fn.get_fn_value_expr(self.fn_cursor)})"
+            if self.inect_docstring:
+                bind_expr = entity_base._inject_docstring(
+                    bind_expr, self.fn_cursor, "last_arg")
         return _def_bind_method.format(method_identifier=self.identifier_name, bind_expr=bind_expr)
 
     def get_call_stmt(self):
@@ -112,7 +115,7 @@ class GenMethod:
                     root_cursor):
                 root_cursor = template_cursor
         for cursor in root_cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and kls_entity.is_pubic(
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and kls_entity.could_export(
                     cursor) and not common.is_operator_overload(cursor):
                 bind_name = fn.fn_python_name(cursor)
                 unique_name = bind_name

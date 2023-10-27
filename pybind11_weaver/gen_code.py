@@ -46,6 +46,16 @@ struct {entity_struct_name} : public {bind_struct_name}<std::decay_t<{handle_typ
   {handle_type} handle;
     
 }};
+
+#else
+
+struct {entity_struct_name} : public pybind11_weaver::DisabledEntity {{
+  explicit {entity_struct_name}(EntityScope parent_h){{}}
+  static const char * Key(){{ 
+    return {unique_struct_key};
+  }}
+}};
+
 #endif // PB11_WEAVER_DISABLE_{entity_struct_name}
 """
 
@@ -191,6 +201,6 @@ def gen_ensure_code(exported_types: List[str]) -> str:
     ensure_code = []
     for type in sorted(used_types):
         if type not in exported_types:
-            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>(m,\"{type}\");")
+            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>::run(m,\"{type}\");")
     ensure_code = "\n".join(ensure_code)
     return ensure_code

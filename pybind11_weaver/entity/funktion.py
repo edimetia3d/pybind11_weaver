@@ -32,10 +32,12 @@ class FunctionEntity(entity_base.Entity):
 
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
         code = []
-        code.append(
-            f"{pybind11_obj_sym}.def(\"{fn.fn_python_name(self.cursor)}\",{fn.get_fn_value_expr(self.cursor)});")
-        if self.gu.io_config.gen_docstring:
-            code[-1] = entity_base._inject_docstring(code[-1], self.cursor, "last_arg")
+        fn_ptr = fn.get_fn_value_expr(self.cursor)
+        if fn_ptr is not None:
+            code.append(
+                f"{pybind11_obj_sym}.def(\"{fn.fn_python_name(self.cursor)}\",{fn_ptr});")
+            if self.gu.io_config.gen_docstring:
+                code[-1] = entity_base._inject_docstring(code[-1], self.cursor, "last_arg")
         return code
 
     def default_pybind11_type_str(self) -> str:

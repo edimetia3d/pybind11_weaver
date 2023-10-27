@@ -19,19 +19,29 @@ template <class BindT, class PB11T> void TryAddDefaultCtor(PB11T &handle) {
   }
 }
 
-template <class T>
-void EnsureExportUsedType(pybind11::module_ &m, const char *realname) {
-  using DT = std::decay_t<T>;
-  if (!pybind11::detail::get_type_info(typeid(DT))) {
-    std::string name = std::string("PWCapsule") + typeid(DT).name();
-    pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
-    handle.def("real_name", [=]() { return realname; });
-    TryAddDefaultCtor<DT>(handle);
+template <class T, int = 0> struct EnsureExportUsedType {
+  static void run(pybind11::module_ &m, const char *realname) {}
+};
+
+template <class T> struct EnsureExportUsedType<T, sizeof(T)> {
+  static void run(pybind11::module_ &m, const char *realname) {
+    using DT = std::decay_t<T>;
+    if (!pybind11::detail::get_type_info(typeid(DT))) {
+      std::string name = std::string("PWCapsule") + typeid(DT).name();
+      pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
+      handle.def("real_name", [=]() { return realname; });
+      TryAddDefaultCtor<DT>(handle);
+    }
   }
-}
+};
 
 template <class ClassT, class MethodRetT, class... MethodArgs> struct FnPtrT {
   using type = MethodRetT (ClassT::*)(MethodArgs...);
+  using const_type = MethodRetT (ClassT::*)(MethodArgs...) const;
+  using const_rref_type = MethodRetT (ClassT::*)(MethodArgs...) const &&;
+  using const_lref_type = MethodRetT (ClassT::*)(MethodArgs...) const &;
+  using rref_type = MethodRetT (ClassT::*)(MethodArgs...) &&;
+  using lref_type = MethodRetT (ClassT::*)(MethodArgs...) &;
 };
 template <class FnTtype> struct FnPtrT<void, FnTtype> {
   using type = FnTtype *;
@@ -69,13 +79,14 @@ template <class T> struct PointerWrapper : public _PointerWrapperBase {
   }
   T Cptr() { return reinterpret_cast<T>(ptr); }
 };
-template <class T> using WrappedPtrT = std::shared_ptr<PointerWrapper<T>>;
+template <class T>
+using WrappedPtrT = std::shared_ptr<PointerWrapper<std::decay_t<T>>>;
 
-template <class T> WrappedPtrT<T> WrapP(T ptr) {
+template <class T> WrappedPtrT<T> WrapP(std::decay_t<T> ptr) {
   if (!ptr) {
     return nullptr;
   }
-  return WrappedPtrT<T>{new PointerWrapper<T>(ptr)};
+  return WrappedPtrT<T>{new PointerWrapper<std::decay_t<T>>((void *)ptr)};
 }
 
 struct Guardian {

@@ -7,6 +7,11 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+def is_public(cursor: cindex.Cursor) -> bool:
+    return cursor.access_specifier not in [cindex.AccessSpecifier.CX_CXXPrivate,
+                                           cindex.AccessSpecifier.CX_CXXProtected]
+
+
 def is_visible(cursor: cindex.Cursor, strcit_mode: bool) -> bool:
     vis = pylibclang._C.clang_getCursorVisibility(cursor) == cindex._C.CXVisibilityKind.CXVisibility_Default
     lazy_inline_check = cursor.is_definition() and ".h" in str(cursor.location.file)
@@ -47,7 +52,7 @@ def get_used_types():
     return _used_types
 
 
-def safe_type_reference(type: cindex.Type):
+def safe_type_reference(type: cindex.Type) -> str:
     ret = type.get_canonical().spelling
     if "type-parameter" in ret:
         return type.spelling  # type is a template parameter

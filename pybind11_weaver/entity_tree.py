@@ -138,5 +138,8 @@ class EntityTree:
             if cursor_filename.endswith(tail):
                 in_src = True
                 break
-        return in_src and cursor.linkage != cindex.LinkageKind.CXLinkage_Internal and common.is_visible(cursor,
-                                                                                                        self.gu.io_config.strict_visibility_mode)
+        return (in_src
+                and cursor.linkage != cindex.LinkageKind.CXLinkage_Internal
+                and common.is_public(cursor)
+                and common.is_visible(cursor,
+                                      self.gu.io_config.strict_visibility_mode))
