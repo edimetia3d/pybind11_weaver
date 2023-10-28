@@ -37,3 +37,4 @@ template <> std::string Foo<Q::R<int>, 8>(Q::R<int>, int) {
 // Explicit instantiation of template function, so it could be found by the
 // linker.
 template std::string Foo<float, 9>(float, int);
+template class template_ns::TemplateClass<int>;

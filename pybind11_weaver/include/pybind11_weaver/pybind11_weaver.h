@@ -19,23 +19,6 @@ template <class BindT, class PB11T> void TryAddDefaultCtor(PB11T &handle) {
   }
 }
 
-template <class T, class T2 = void> struct EnsureExportUsedType {
-  static void run(pybind11::module_ &m, const char *realname) {}
-};
-
-template <class T>
-struct EnsureExportUsedType<T, decltype(sizeof(std::decay_t<T>))> {
-  static void run(pybind11::module_ &m, const char *realname) {
-    using DT = std::decay_t<T>;
-    if (!pybind11::detail::get_type_info(typeid(DT))) {
-      std::string name = std::string("PWCapsule") + typeid(DT).name();
-      pybind11::class_<DT> handle(m, name.c_str(), pybind11::module_local());
-      handle.def("real_name", [=]() { return realname; });
-      TryAddDefaultCtor<DT>(handle);
-    }
-  }
-};
-
 template <class ClassT, class MethodRetT, class... MethodArgs> struct FnPtrT {
   using type = MethodRetT (ClassT::*)(MethodArgs...);
   using const_type = MethodRetT (ClassT::*)(MethodArgs...) const;

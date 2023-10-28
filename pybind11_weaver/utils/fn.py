@@ -68,7 +68,7 @@ class PointerToPb11Value(ValueCast):
 
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
-        _wrapped_db.add(common.safe_type_reference(self.c_type))
+        _wrapped_db.add(self.c_type)
 
     def cvt(self, c_value: str, **kwargs):
         return f"pybind11_weaver::WrapP<{common.safe_type_reference(self.c_type)}>({c_value})"
@@ -77,7 +77,7 @@ class PointerToPb11Value(ValueCast):
 class Pb11ValueToPointer(ValueCast):
     def __init__(self, *args, **kwargs):
         ValueCast.__init__(self, *args, **kwargs)
-        _wrapped_db.add(common.safe_type_reference(self.c_type))
+        _wrapped_db.add(self.c_type)
 
     def cvt(self, pb11_value: str, **kwargs):
         return f"({pb11_value})->Cptr()"
@@ -110,38 +110,40 @@ class Pb11FnToFnPointer(ValueCast):
                                           enumerate(self.c_type.argument_types())])
 
 
-def _proto_to_pb11_type(proto: cindex.TypeKind.CXType_FunctionProto):
-    ret_t, args_t, casted = _c_io_type_to_pb11_io_type(proto.get_result(), proto.argument_types())
-    if casted:
-        pb11_type = f"std::function<{ret_t} ({','.join(args_t)})>"
-        return pb11_type, FnPointerToPb11Fn(proto, pb11_type), Pb11FnToFnPointer(proto, pb11_type)
-    else:
-        fn_ptr_t = f"{ret_t} (*)({','.join(args_t)})"
-        return fn_ptr_t, NoCast(proto, fn_ptr_t), NoCast(proto, fn_ptr_t)
-
-
 def get_pb11_type(c_type: cindex.Type) -> Tuple[str, "CValuePb11Value", "Pb11ValueToCValue"]:
     c_type_spelling = common.safe_type_reference(c_type)
     canonical = c_type.get_canonical()
     ret = c_type_spelling, NoCast(canonical, c_type_spelling), NoCast(canonical, c_type_spelling)
 
+    def to_pb11_fn(proto: cindex.TypeKind.CXType_FunctionProto):
+        ret_t, args_t, casted = _c_io_type_to_pb11_io_type(proto.get_result(), proto.argument_types())
+        if casted:
+            pb11_type = f"std::function<{ret_t} ({','.join(args_t)})>"
+            return pb11_type, FnPointerToPb11Fn(proto, pb11_type), Pb11FnToFnPointer(proto, pb11_type)
+        else:
+            fn_ptr_t = f"{ret_t} (*)({','.join(args_t)})"
+            return fn_ptr_t, NoCast(proto, fn_ptr_t), NoCast(proto, fn_ptr_t)
+
+    def to_warped_ptr():
+        pb11_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
+        return pb11_type, PointerToPb11Value(canonical, pb11_type), Pb11ValueToPointer(canonical, pb11_type)
+
     if c_type_spelling.startswith("std::function"):
-        return _proto_to_pb11_type(
-            canonical.get_template_argument_type(0))  # only make sure all types are insert to used_types
+        return to_pb11_fn(canonical.get_template_argument_type(0))
 
     if canonical.kind == cindex.TypeKind.CXType_Pointer:
         pointee = canonical.get_pointee().get_canonical()
         if pointee.kind in [cindex.TypeKind.CXType_Pointer, cindex.TypeKind.CXType_Void]:
-            pb11_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
-            return pb11_type, PointerToPb11Value(canonical, pb11_type), Pb11ValueToPointer(canonical, pb11_type)
+            return to_warped_ptr()
         if pointee.kind in [cindex.TypeKind.CXType_FunctionProto]:
-            return _proto_to_pb11_type(pointee)
+            return to_pb11_fn(pointee)
         # if pointee is a incompelete type, wrap it
         pointee_decl = pointee.get_declaration()
         if pointee_decl.kind in [cindex.CursorKind.CXCursor_StructDecl,
                                  cindex.CursorKind.CXCursor_ClassDecl] and not pointee_decl.is_definition():
-            pb11_type = f"pybind11_weaver::WrappedPtrT<{c_type_spelling}>"
-            return pb11_type, PointerToPb11Value(canonical, pb11_type), Pb11ValueToPointer(canonical, pb11_type)
+            return to_warped_ptr()
+        if not common.is_type_deletable(pointee):
+            return to_warped_ptr()
         common.add_used_types(pointee)
     else:
         common.add_used_types(canonical)
@@ -208,7 +210,7 @@ def _c_io_type_to_pb11_io_type(c_ret_t, c_args_t) -> Tuple[str, List[str], bool]
     py11_args_t = []
     casted = not isinstance(c_to_pb11, NoCast)
     for a in c_args_t:
-        pb11_t, _, _ = get_pb11_type(a)
+        pb11_t, c_to_pb11, _ = get_pb11_type(a)
         py11_args_t.append(pb11_t)
         casted = casted or not isinstance(c_to_pb11, NoCast)
 

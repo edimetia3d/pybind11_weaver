@@ -90,17 +90,8 @@ class TestAll(unittest.TestCase):
         self._test_callback("use_c_callback", 1)
         self._test_callback("use_cpp_callback", 2)
 
-    def test_unexport(self):
-        assert not hasattr(m, "UnexportedType")
-        passed = False
-        for attr in m.__dict__:
-            if attr.startswith("PWCapsule"):
-                if attr.endswith("UnexportedType"):
-                    passed = True
-        assert passed
-
     def test_template_function(self):
-        assert "Special one" == m.Foo_Q_R6int9_8(m.PWCapsuleN1Q1RIiEE(), 1)
+        assert "Special one" == m.Foo_Q_R6int9_8(m.R6int9(), 1)
         assert "Default one" == m.Foo_float_9(1.0, 1)
 
 

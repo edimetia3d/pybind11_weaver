@@ -10,6 +10,7 @@ from typing import List, Tuple
 from pylibclang import cindex
 
 from pybind11_weaver import config
+from pybind11_weaver.utils import common
 
 
 class GenUnit:
@@ -56,6 +57,23 @@ class GenUnit:
 
     def include_directives(self) -> List[str]:
         return ["#include " + path for path in self.io_config.inputs]
+
+    def is_cursor_in_inputs(self, cursor: cindex.Cursor):
+        valid_files = self.include_files() + [self.unsaved_file[0]]
+        file = cursor.location.file
+        if file is None:
+            return False
+        cursor_filename = file.name
+        in_src = False
+        for tail in valid_files:
+            if cursor_filename.endswith(tail):
+                in_src = True
+                break
+        return (in_src
+                and cursor.linkage != cindex.LinkageKind.CXLinkage_Internal
+                and common.is_public(cursor)
+                and common.is_visible(cursor,
+                                      self.io_config.strict_visibility_mode))
 
 
 def load_all_gu(file_or_content: str) -> List[GenUnit]:

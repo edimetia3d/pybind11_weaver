@@ -63,12 +63,25 @@ def add_used_types(type: cindex.Type):
     canonical = type.get_canonical()
     if int(canonical.kind) > int(
             cindex.TypeKind.CXType_LastBuiltin) and "std::" not in canonical.get_canonical().spelling:
-        _used_types.add(safe_type_reference(type))
+        _used_types.add(safe_type_reference(remove_const_ref_pointer(type)))
+
+
+def remove_const_ref(type: cindex.Type):
+    tu = type._tu
+    type = pylibclang._C.clang_getUnqualifiedType(pylibclang._C.clang_getNonReferenceType(type))
+    type._tu = tu
+    return type
+
+
+def remove_pointer(type: cindex.Type):
+    if type.kind in [cindex.TypeKind.CXType_Pointer]:
+        type = type.get_pointee()
+    return type
 
 
 def remove_const_ref_pointer(type: cindex.Type):
     tu = type._tu
-    type = pylibclang._C.clang_getUnqualifiedType(pylibclang._C.clang_getNonReferenceType(type))
+    type = remove_const_ref(type)
     type._tu = tu
     if type.kind in [cindex.TypeKind.CXType_Pointer]:
         return remove_const_ref_pointer(type.get_pointee())
@@ -81,3 +94,38 @@ def is_types_has_unique_ptr(types: List[cindex.Type]):
         if "std::unique_ptr" in safe_type_reference(t):
             return True
     return False
+
+
+def could_member_accessed(cursor: cindex.Cursor):
+    return is_public(cursor) and not cursor.is_deleted_method() and is_visible(
+        cursor, True)
+
+
+_deletable_db = dict()
+
+
+def is_type_deletable(type: cindex.Type):
+    cursor = type.get_declaration()
+    deletable = True
+    if cursor.kind not in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]:
+        return True
+    if is_concreate_template(cursor):
+        cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
+        cursor._tu = type._tu
+    for c in cursor.get_children():
+        if c.kind == cindex.CursorKind.CXCursor_Destructor and not could_member_accessed(c):
+            deletable = False
+        if c.kind == cindex.CursorKind.CXCursor_CXXMethod and c.spelling == "operator delete":
+            if not could_member_accessed(c):
+                deletable = False
+        if c.kind == cindex.CursorKind.CXCursor_CXXBaseSpecifier:
+            base_name = safe_type_reference(c.type)
+            if base_name in _deletable_db:
+                deletable = _deletable_db[base_name]
+            else:
+                if not is_type_deletable(c.type):
+                    deletable = False
+        if not deletable:
+            break
+    _deletable_db[safe_type_reference(type)] = deletable
+    return deletable

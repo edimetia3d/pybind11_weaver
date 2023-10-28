@@ -124,7 +124,7 @@ class GenMethod:
                     root_cursor):
                 root_cursor = template_cursor
         for cursor in root_cursor.get_children():
-            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and kls_entity.could_export(
+            if cursor.kind == cindex.CursorKind.CXCursor_CXXMethod and kls_entity.could_member_export(
                     cursor) and not common.is_operator_overload(cursor):
                 bind_name = fn.fn_python_name(cursor)
                 unique_name = bind_name

@@ -1,11 +1,14 @@
 import os.path
 from typing import Dict, List
 import shutil
+import logging
 
-from pybind11_weaver.entity import entity_base, klass
+from pybind11_weaver.entity import entity_base, klass, enum
 from pybind11_weaver import entity_tree
 from pybind11_weaver import gen_unit
 from pybind11_weaver.utils import fn, common
+
+_logger = logging.getLogger(__name__)
 
 entity_template = """
 
@@ -75,7 +78,6 @@ pybind11_weaver::_PointerWrapperBase::FastBind(m);
 
 {create_entity_var_stmts}
 
-{ensure_export_used_types}
     auto update_fn = [=](){{
 {update_entity_var_stmts}    
     }};
@@ -97,8 +99,8 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
     for key in sorted_keys:
         entity = entities[key]
         assert entity is not None
-        if isinstance(entity, klass.ClassEntity):
-            exported_type.append(common.safe_type_reference(entity.cursor.type))
+        if isinstance(entity, klass.ClassEntity) or isinstance(entity, enum.EnumEntity):
+            exported_type.append(common.safe_type_reference(common.remove_const_ref_pointer(entity.cursor.type)))
         entity_obj_sym = f"v{next_id}"
         entity_struct_name = "Entity_" + entity.get_pb11weaver_struct_name()
         # generate body
@@ -145,6 +147,8 @@ def gen_code(config_file: str):
             entities=target_entities,
             parent_sym="EntityScope(m)", beg_id=0)
 
+        warn_unexported_types(exported_type)
+
         # load pybind11_weaver_header
         pybind11_weaver_header_path = os.path.dirname(
             os.path.abspath(__file__)) + "/include/pybind11_weaver/pybind11_weaver.h"
@@ -159,7 +163,6 @@ def gen_code(config_file: str):
             decl_fn_name=gu.io_config.decl_fn_name,
             entity_struct_decls="\n".join(entity_struct_decls),
             create_warped_pointer_bindings=gen_wrapped_pointer_code(),
-            ensure_export_used_types=gen_ensure_code(exported_type),
             create_entity_var_stmts="\n".join(create_entity_var_stmts),
             update_entity_var_stmts="\n".join(update_entity_var_stmts),
         )
@@ -172,7 +175,11 @@ def gen_code(config_file: str):
 
 
 def gen_wrapped_pointer_code() -> str:
-    wrapped_types = fn.get_wrapped_types()
+    wrapped_pointer_t = fn.get_wrapped_types()
+    wrapped_types = set()
+    for t in wrapped_pointer_t:
+        s = common.safe_type_reference(t)
+        wrapped_types.add(s)
     create_warped_pointer_bindings = []
     for type in sorted(wrapped_types):
         wrapped_type_binding_code_template = "pybind11_weaver::PointerWrapper<{type}>::FastBind(m,\"{safe_type_name}\");"
@@ -187,11 +194,15 @@ def gen_wrapped_pointer_code() -> str:
     return create_warped_pointer_bindings
 
 
-def gen_ensure_code(exported_types: List[str]) -> str:
+def warn_unexported_types(exported_types: List[str]) -> str:
+    wrapped = set()
+    for t in fn.get_wrapped_types():
+        s = common.safe_type_reference(common.remove_const_ref_pointer(t))
+        wrapped.add(s)
     used_types = common.get_used_types()
-    ensure_code = []
-    for type in sorted(used_types):
-        if type not in exported_types:
-            ensure_code.append(f"pybind11_weaver::EnsureExportUsedType<{type}>::run(m,\"{type}\");")
-    ensure_code = "\n".join(ensure_code)
-    return ensure_code
+    for t in sorted(used_types):
+        if t in exported_types:
+            continue
+        if t in wrapped:
+            continue
+        _logger.warning(f"Type `{t}` is used but not exported, some API may not be available. ")

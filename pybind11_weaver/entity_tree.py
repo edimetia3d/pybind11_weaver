@@ -23,6 +23,19 @@ def _inject_tu(nodes, gu):
         del node._tu
 
 
+def get_template_struct_class(cursor: cindex.Cursor):
+    source_file = cursor.location.file
+    source_line = cursor.location.line
+    # read the source_line-th line's content in the source file
+    with open(source_file.name, 'r') as f:
+        source_code = f.read()
+        line_content = source_code.splitlines()[source_line - 1]
+    if "struct" in line_content:
+        return "extern template struct"
+    else:
+        return "extern template class"
+
+
 class EntityTree:
     """
     Entity Tree like an AST tree, itself is the root node.
@@ -55,7 +68,7 @@ class EntityTree:
         implicit_instantiation = dict()
 
         def is_valid(cursor: cindex.Cursor):
-            return self.is_cursor_in_inputs(cursor)
+            return gu.is_cursor_in_inputs(cursor)
 
         def visitor(cursor, parent, unused1):
             if not is_valid(cursor):
@@ -70,20 +83,14 @@ class EntityTree:
                 elif cursor.kind == cindex.CursorKind.CXCursor_TemplateRef and is_valid(cursor.referenced):
                     # we can not get more info from template ref anymore, so we need to get info from parent
                     possible_types = []
-                    if parent.kind in [cindex.CursorKind.CXCursor_FieldDecl, cindex.CursorKind.CXCursor_ParmDecl]:
+                    if parent.kind in [cindex.CursorKind.CXCursor_FieldDecl, cindex.CursorKind.CXCursor_ParmDecl,
+                                       cindex.CursorKind.CXCursor_CXXBaseSpecifier]:
                         possible_types = [parent.type]
                     elif parent.kind in [cindex.CursorKind.CXCursor_FunctionDecl, cindex.CursorKind.CXCursor_CXXMethod]:
                         possible_types = [parent.result_type] + [arg.type for arg in parent.get_arguments()]
                     else:
                         _logger.info(
                             f"Only template instance may used in python will get auto exported, ignored {parent.kind} at {parent.location}")
-
-                    def get_prefix(template_cursor: cindex.Cursor):
-                        struct_kind = pylibclang._C.clang_getTemplateCursorKind(template_cursor)
-                        if struct_kind == cindex.CursorKind.CXCursor_StructDecl:
-                            return "extern template struct"
-                        elif struct_kind == cindex.CursorKind.CXCursor_ClassDecl:
-                            return "extern template class"
 
                     for t in possible_types:
                         t = common.remove_const_ref_pointer(t).get_canonical()
@@ -93,7 +100,7 @@ class EntityTree:
                             if is_valid(template_c):
                                 key_name = common.safe_type_reference(t)
                                 if key_name not in explicit_instantiation:
-                                    implicit_instantiation[key_name] = get_prefix(template_c)
+                                    implicit_instantiation[key_name] = get_template_struct_class(template_c)
 
             return pylibclang._C.CXChildVisitResult.CXChildVisit_Recurse
 
@@ -110,7 +117,7 @@ class EntityTree:
         def visitor(child_cursor, unused0, unused1):
             child_cursor._tu = gu.tu  # keep compatible with cindex and keep tu alive
             parent = last_parent[0]
-            if self.is_cursor_in_inputs(child_cursor):
+            if gu.is_cursor_in_inputs(child_cursor):
                 if child_cursor.kind == cindex.CursorKind.CXCursor_UnexposedDecl:
                     worklist.append((child_cursor, parent))
                     return pylibclang._C.CXChildVisitResult.CXChildVisit_Continue
@@ -126,20 +133,3 @@ class EntityTree:
             last_parent[0] = new_item[1]
             next_cur = new_item[0]
             pylibclang._C.clang_visitChildren(next_cur, visitor, pylibclang._C.voidp(0))
-
-    def is_cursor_in_inputs(self, cursor: cindex.Cursor):
-        valid_files = self.gu.include_files() + [self.gu.unsaved_file[0]]
-        file = cursor.location.file
-        if file is None:
-            return False
-        cursor_filename = file.name
-        in_src = False
-        for tail in valid_files:
-            if cursor_filename.endswith(tail):
-                in_src = True
-                break
-        return (in_src
-                and cursor.linkage != cindex.LinkageKind.CXLinkage_Internal
-                and common.is_public(cursor)
-                and common.is_visible(cursor,
-                                      self.gu.io_config.strict_visibility_mode))

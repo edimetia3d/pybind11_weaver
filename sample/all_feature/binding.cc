@@ -28,15 +28,20 @@ public:
                [](earth::creatures::SweetHome &self) { return 1; });
   }
 
-  void BindMethod_Method(Pybind11Type &obj) override {
-    obj.def("Method", [](earth::creatures::SweetHome &self, int i) {
+  const char *AddMethod_Method() override {
+    handle.def("Method", [](earth::creatures::SweetHome &self, int i) {
       return self.Method(i + 1);
     });
-    obj.def("Method",
-            static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
-                &earth::creatures::SweetHome::Method));
+    handle.def(
+        "Method",
+        static_cast<void (earth::creatures::SweetHome::*)(std::string &)>(
+            &earth::creatures::SweetHome::Method));
+    return nullptr;
   }
-  void BindMethod_Method1(Pybind11Type &obj) override {}
+  const char *AddMethod_Method1() override {
+    // just used to disable the original binding
+    return nullptr;
+  }
 };
 } // namespace
 PYBIND11_MODULE(all_feature_module, m) {

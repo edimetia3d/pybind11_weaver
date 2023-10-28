@@ -35,15 +35,6 @@ class ClassEntity(entity_base.Entity):
             code = entity_base._inject_docstring(code, self.cursor, "append")
         return code
 
-    def could_export(self, cursor: cindex.Cursor):
-        if common.is_concreate_template(cursor):
-            template_cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
-            template_cursor._tu = cursor._tu  # keep compatible with cindex and keep tu alive
-            cursor = template_cursor
-
-        return common.is_public(cursor) and not cursor.is_deleted_method() and common.is_visible(
-            cursor, self.gu.io_config.strict_visibility_mode)
-
     def update_stmts(self, pybind11_obj_sym: str) -> List[str]:
 
         # generate method binding first, because it will inject template argument using decl
@@ -90,7 +81,8 @@ virtual const char * AddCtor{id}(){{
 
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_Constructor:
-                if self.could_export(cursor) and not (cursor.is_move_constructor() or cursor.is_copy_constructor()):
+                if self.could_member_export(cursor) and not (
+                        cursor.is_move_constructor() or cursor.is_copy_constructor()):
                     add_ctor(cursor, pybind11_obj_sym, len(codes))
 
         if len(codes) == 0:
@@ -99,22 +91,40 @@ virtual const char * AddCtor{id}(){{
 
     def default_pybind11_type_str(self) -> str:
         t_param_list = [self.reference_name()]
-        base_class = None
+
+        if not common.is_type_deletable(self.cursor.type):
+            t_param_list.append(f"std::unique_ptr<{self.reference_name()},pybind11::nodelete>")
+        base_cursor = None
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_CXXBaseSpecifier:
-                if base_class is not None:
-                    base_class = None
+                if base_cursor is not None:
+                    base_cursor = None
                     _logger.warning(
                         f"Multiple inheritance not supported `{self.cursor.type.spelling}`, base class ignored")
                 else:
-                    base_class = cursor.type
-            if cursor.kind == cindex.CursorKind.CXCursor_Destructor and not self.could_export(cursor):
-                t_param_list.append(f"std::unique_ptr<{self.reference_name()},pybind11::nodelete>")
-        if base_class is not None and self.could_export(base_class.get_declaration()):
-            common.add_used_types(base_class)
-            t_param_list.append(common.safe_type_reference(base_class))
+                    base_cursor = cursor
+
+        if (base_cursor is not None
+                and self.could_user_class_export(base_cursor.type)):
+            t_param_list.append(common.safe_type_reference(base_cursor.type))
         return f"pybind11::class_<{','.join(t_param_list)}>"
 
     def extra_code(self) -> str:
         """Entity may inject extra code into the generated binding struct."""
         return "\n".join(self.extra_methods_codes)
+
+    def could_member_export(self, cursor: cindex.Cursor):
+        return common.could_member_accessed(cursor) and self.gu.is_cursor_in_inputs(cursor)
+
+    def could_user_class_export(self, type: cindex.Type):
+        cursor = type.get_declaration()
+        if common.is_concreate_template(cursor):
+            template_cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
+            template_cursor._tu = cursor._tu  # keep compatible with cindex and keep tu alive
+            cursor = template_cursor
+        parent_is_struct = cursor.semantic_parent.kind in [cindex.CursorKind.CXCursor_ClassDecl,
+                                                           cindex.CursorKind.CXCursor_StructDecl,
+                                                           cindex.CursorKind.CXCursor_ClassTemplate]
+        if parent_is_struct and not common.could_member_accessed(cursor):
+            return False
+        return self.gu.is_cursor_in_inputs(cursor)
