@@ -112,3 +112,7 @@ class Entity(abc.ABC):
         The dependency is the reference name of the entity.
         """
         return []
+
+    def top_level_extra_code(self) -> str:
+        """Entity may inject extra code into the generated binding struct."""
+        return ""

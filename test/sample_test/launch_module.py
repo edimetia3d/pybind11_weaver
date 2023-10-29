@@ -94,6 +94,27 @@ class TestAll(unittest.TestCase):
         assert "Special one" == m.Foo_Q_R6int9_8(m.R6int9(), 1)
         assert "Default one" == m.Foo_float_9(1.0, 1)
 
+    def test_virtual_trampoline(self):
+        class PythonType(m.DriveVirtual):
+            def __init__(self):
+                super().__init__()
+
+            def foo(self, x):
+                assert x == "996"
+                return 9996
+
+            def bar(self, y):
+                assert y == 996
+                return 1996.0
+
+        normal_obj = m.DriveVirtual()
+        assert normal_obj.call_foo() == 0
+        assert normal_obj.call_bar() == 1.0
+
+        python_obj = PythonType()
+        assert python_obj.call_foo() == 9996
+        assert python_obj.call_bar() == 1996.0
+
 
 if __name__ == "__main__":
     unittest.main()

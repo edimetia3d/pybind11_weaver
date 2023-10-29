@@ -15,13 +15,6 @@ _logger = logging.getLogger(__name__)
 _KIND = cindex.CursorKind
 
 
-def _is_concreate_template(cursor: cindex.Cursor):
-    if common.is_concreate_template(cursor):
-        _logger.warning(f"Concreate template not supported `{cursor.canonical.displayname}` ")
-        return True
-    return False
-
-
 def create_entity(gu: gen_unit.GenUnit, cursor: cindex.Cursor):
     """Create an entity without parent.
 

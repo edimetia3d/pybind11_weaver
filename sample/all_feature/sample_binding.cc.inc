@@ -1,5 +1,5 @@
 
-// GENERATED AT 10/28/2023, 17:31:05
+// GENERATED AT 10/30/2023, 16:15:51
 
 #include "sample.h"
 #include "template_pb11_weaver_helper.h"
@@ -643,6 +643,132 @@ struct Entity_TopFunctionDef : public pybind11_weaver::DisabledEntity {
 
 #endif // PB11_WEAVER_DISABLE_Entity_TopFunctionDef
 
+template <class = void>
+class PyTrampVirtualBase6int9 : public VirtualBase<int> {
+public:
+  using _PB11_WR_BaseT = VirtualBase<int>;
+  using _PB11_WR_BaseT::_PB11_WR_BaseT;
+  using T = int;
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9std_string_
+  T foo(std::basic_string<char> a) override {
+    using _PB11_WR_RET_TYPE = T;
+    using _PB11_WR_CONCREATE_TYPE = VirtualBase<int>;
+    PYBIND11_OVERRIDE_PURE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE, foo, a);
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9std_string_
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9_
+  T inherit_to_final() override {
+    using _PB11_WR_RET_TYPE = T;
+    using _PB11_WR_CONCREATE_TYPE = VirtualBase<int>;
+    PYBIND11_OVERRIDE_PURE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE,
+                           inherit_to_final,
+
+    );
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9_
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9_
+  T inherit_to_private() override {
+    using _PB11_WR_RET_TYPE = T;
+    using _PB11_WR_CONCREATE_TYPE = VirtualBase<int>;
+    PYBIND11_OVERRIDE_PURE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE,
+                           inherit_to_private,
+
+    );
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_VirtualBase6int9T9_
+};
+
+template <class Pybind11T =
+              pybind11::class_<VirtualBase<int>, PyTrampVirtualBase6int9<>>>
+struct Bind_VirtualBase6int9 : public EntityBase {
+  using Pybind11Type = Pybind11T;
+  using T = int;
+
+  virtual const char *AddMethod_foo() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_VirtualBase6int9_foo
+    handle.def("foo", static_cast<pybind11_weaver::FnPtrT<
+                          VirtualBase<T>, T, std::basic_string<char>>::type>(
+                          &VirtualBase<T>::foo));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_inherit_to_final() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_VirtualBase6int9_inherit_to_final
+    handle.def("inherit_to_final",
+               static_cast<pybind11_weaver::FnPtrT<VirtualBase<T>, T>::type>(
+                   &VirtualBase<T>::inherit_to_final));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_inherit_to_private() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_VirtualBase6int9_inherit_to_private
+    handle.def("inherit_to_private",
+               static_cast<pybind11_weaver::FnPtrT<VirtualBase<T>, T>::type>(
+                   &VirtualBase<T>::inherit_to_private));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_call_foo() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_VirtualBase6int9_call_foo
+    handle.def("call_foo",
+               static_cast<pybind11_weaver::FnPtrT<VirtualBase<T>, T>::type>(
+                   &VirtualBase<T>::call_foo));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  explicit Bind_VirtualBase6int9(EntityScope parent_h)
+      : handle{parent_h, "VirtualBase6int9", pybind11::dynamic_attr()} {}
+
+  template <class... HandleArgsT>
+  explicit Bind_VirtualBase6int9(EntityScope parent_h, HandleArgsT &&...args)
+      : handle{std::forward(args)...} {}
+
+  void Update() override {
+    AddMethod_foo();
+    AddMethod_inherit_to_final();
+    AddMethod_inherit_to_private();
+    AddMethod_call_foo();
+    pybind11_weaver::TryAddDefaultCtor<VirtualBase<int>>(handle);
+  }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  static const char *Key() { return "VirtualBase6int9"; }
+
+  Pybind11Type handle;
+};
+#ifndef PB11_WEAVER_DISABLE_Entity_VirtualBase6int9
+
+using Entity_VirtualBase6int9 = Bind_VirtualBase6int9<>;
+
+#else
+
+struct Entity_VirtualBase6int9 : public pybind11_weaver::DisabledEntity {
+  explicit Entity_VirtualBase6int9(EntityScope parent_h) {}
+  static const char *Key() { return "VirtualBase6int9"; }
+};
+
+#endif // PB11_WEAVER_DISABLE_Entity_VirtualBase6int9
+
 template <class Pybind11T = pybind11::module_>
 struct Bind_disabled_member : public EntityBase {
   using Pybind11Type = Pybind11T;
@@ -1061,7 +1187,33 @@ struct Entity_NSFunctionDef : public pybind11_weaver::DisabledEntity {
 
 #endif // PB11_WEAVER_DISABLE_Entity_NSFunctionDef
 
-template <class Pybind11T = pybind11::class_<earth::creatures::SweetHome>>
+template <class = void>
+class PyTrampSweetHome : public earth::creatures::SweetHome {
+public:
+  using _PB11_WR_BaseT = earth::creatures::SweetHome;
+  using _PB11_WR_BaseT::_PB11_WR_BaseT;
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_earth_creatures_SweetHomevoid9int_
+  void VirtualMethod(int arg0) override {
+    using _PB11_WR_RET_TYPE = void;
+    using _PB11_WR_CONCREATE_TYPE = earth::creatures::SweetHome;
+    PYBIND11_OVERRIDE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE, VirtualMethod,
+                      arg0);
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_earth_creatures_SweetHomevoid9int_
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_earth_creatures_SweetHomevoid9std_string__
+  void VirtualMethod(std::basic_string<char> &arg0) override {
+    using _PB11_WR_RET_TYPE = void;
+    using _PB11_WR_CONCREATE_TYPE = earth::creatures::SweetHome;
+    PYBIND11_OVERRIDE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE, VirtualMethod,
+                      arg0);
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_earth_creatures_SweetHomevoid9std_string__
+};
+
+template <class Pybind11T =
+              pybind11::class_<earth::creatures::SweetHome, PyTrampSweetHome<>>>
 struct Bind_earth_creatures_SweetHome : public EntityBase {
   using Pybind11Type = Pybind11T;
 
@@ -1512,6 +1664,116 @@ struct Entity_template_ns_TemplateClass6int9
 
 #endif // PB11_WEAVER_DISABLE_Entity_template_ns_TemplateClass6int9
 
+template <class = void> class PyTrampDriveVirtual : public DriveVirtual {
+public:
+  using _PB11_WR_BaseT = DriveVirtual;
+  using _PB11_WR_BaseT::_PB11_WR_BaseT;
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_DriveVirtualint9std_string_
+  int foo(std::basic_string<char> a) override {
+    using _PB11_WR_RET_TYPE = int;
+    using _PB11_WR_CONCREATE_TYPE = DriveVirtual;
+    PYBIND11_OVERRIDE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE, foo, a);
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_DriveVirtualint9std_string_
+
+#ifndef PYBIND11_DISABLE_OVERRIDE_DriveVirtualfloat9int_
+  float bar(int arg0) override {
+    using _PB11_WR_RET_TYPE = float;
+    using _PB11_WR_CONCREATE_TYPE = DriveVirtual;
+    PYBIND11_OVERRIDE(_PB11_WR_RET_TYPE, _PB11_WR_CONCREATE_TYPE, bar, arg0);
+  }
+#endif // PYBIND11_DISABLE_OVERRIDE_DriveVirtualfloat9int_
+};
+
+template <class Pybind11T = pybind11::class_<
+              DriveVirtual, PyTrampDriveVirtual<>, VirtualBase<int>>>
+struct Bind_DriveVirtual : public EntityBase {
+  using Pybind11Type = Pybind11T;
+
+  virtual const char *AddMethod_foo() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_DriveVirtual_foo
+    handle.def("foo", static_cast<pybind11_weaver::FnPtrT<
+                          DriveVirtual, int, std::basic_string<char>>::type>(
+                          &DriveVirtual::foo));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_inherit_to_final() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_DriveVirtual_inherit_to_final
+    handle.def("inherit_to_final",
+               static_cast<pybind11_weaver::FnPtrT<DriveVirtual, int>::type>(
+                   &DriveVirtual::inherit_to_final));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_bar() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_DriveVirtual_bar
+    handle.def(
+        "bar",
+        static_cast<pybind11_weaver::FnPtrT<DriveVirtual, float, int>::type>(
+            &DriveVirtual::bar));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  virtual const char *AddMethod_call_bar() {
+
+    const char *_pb11_weaver_comment_str = nullptr;
+
+#ifndef PB11_WEAVER_DISABLE_DriveVirtual_call_bar
+    handle.def("call_bar",
+               static_cast<pybind11_weaver::FnPtrT<DriveVirtual, float>::type>(
+                   &DriveVirtual::call_bar));
+#endif
+    return _pb11_weaver_comment_str;
+  }
+
+  explicit Bind_DriveVirtual(EntityScope parent_h)
+      : handle{parent_h, "DriveVirtual", pybind11::dynamic_attr()} {}
+
+  template <class... HandleArgsT>
+  explicit Bind_DriveVirtual(EntityScope parent_h, HandleArgsT &&...args)
+      : handle{std::forward(args)...} {}
+
+  void Update() override {
+    AddMethod_foo();
+    AddMethod_inherit_to_final();
+    AddMethod_bar();
+    AddMethod_call_bar();
+    pybind11_weaver::TryAddDefaultCtor<DriveVirtual>(handle);
+  }
+
+  EntityScope AsScope() override { return EntityScope(handle); }
+
+  static const char *Key() { return "DriveVirtual"; }
+
+  Pybind11Type handle;
+};
+#ifndef PB11_WEAVER_DISABLE_Entity_DriveVirtual
+
+using Entity_DriveVirtual = Bind_DriveVirtual<>;
+
+#else
+
+struct Entity_DriveVirtual : public pybind11_weaver::DisabledEntity {
+  explicit Entity_DriveVirtual(EntityScope parent_h) {}
+  static const char *Key() { return "DriveVirtual"; }
+};
+
+#endif // PB11_WEAVER_DISABLE_Entity_DriveVirtual
+
 /**
  * Create all entities, return a callable guard that can be called to update all
  *entities. If the returned guard is not called, the guard will call the update
@@ -1541,42 +1803,46 @@ DeclFn(pybind11::module &m,
                                                                registry);
   auto v8 = pybind11_weaver::CreateEntity<Entity_TopFunctionDef>(EntityScope(m),
                                                                  registry);
-  auto v9 = pybind11_weaver::CreateEntity<Entity_disabled_member>(
+  auto v9 = pybind11_weaver::CreateEntity<Entity_VirtualBase6int9>(
       EntityScope(m), registry);
-  auto v10 = pybind11_weaver::CreateEntity<Entity_disabled_member_disabled_Foo>(
-      v9->AsScope(), registry);
-  auto v11 = pybind11_weaver::CreateEntity<Entity_disabled_space>(
+  auto v10 = pybind11_weaver::CreateEntity<Entity_disabled_member>(
       EntityScope(m), registry);
-  auto v12 = pybind11_weaver::CreateEntity<Entity_disabled_space_Foo>(
-      v11->AsScope(), registry);
-  auto v13 =
+  auto v11 = pybind11_weaver::CreateEntity<Entity_disabled_member_disabled_Foo>(
+      v10->AsScope(), registry);
+  auto v12 = pybind11_weaver::CreateEntity<Entity_disabled_space>(
+      EntityScope(m), registry);
+  auto v13 = pybind11_weaver::CreateEntity<Entity_disabled_space_Foo>(
+      v12->AsScope(), registry);
+  auto v14 =
       pybind11_weaver::CreateEntity<Entity_earth>(EntityScope(m), registry);
-  auto v14 = pybind11_weaver::CreateEntity<Entity_earth_creatures>(
-      v13->AsScope(), registry);
-  auto v15 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Animal>(
+  auto v15 = pybind11_weaver::CreateEntity<Entity_earth_creatures>(
       v14->AsScope(), registry);
-  auto v16 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home>(
-      v14->AsScope(), registry);
-  auto v17 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home_Food>(
-      v16->AsScope(), registry);
-  auto v18 = pybind11_weaver::CreateEntity<Entity_NSFunction>(v14->AsScope(),
+  auto v16 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Animal>(
+      v15->AsScope(), registry);
+  auto v17 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home>(
+      v15->AsScope(), registry);
+  auto v18 = pybind11_weaver::CreateEntity<Entity_earth_creatures_Home_Food>(
+      v17->AsScope(), registry);
+  auto v19 = pybind11_weaver::CreateEntity<Entity_NSFunction>(v15->AsScope(),
                                                               registry);
-  auto v19 = pybind11_weaver::CreateEntity<Entity_NSFunctionDef>(v14->AsScope(),
+  auto v20 = pybind11_weaver::CreateEntity<Entity_NSFunctionDef>(v15->AsScope(),
                                                                  registry);
-  auto v20 = pybind11_weaver::CreateEntity<Entity_earth_creatures_SweetHome>(
-      v14->AsScope(), registry);
-  auto v21 = pybind11_weaver::CreateEntity<Entity_earth_creatures_ValueSet>(
-      v14->AsScope(), registry);
-  auto v22 = pybind11_weaver::CreateEntity<Entity_template_ns>(EntityScope(m),
+  auto v21 = pybind11_weaver::CreateEntity<Entity_earth_creatures_SweetHome>(
+      v15->AsScope(), registry);
+  auto v22 = pybind11_weaver::CreateEntity<Entity_earth_creatures_ValueSet>(
+      v15->AsScope(), registry);
+  auto v23 = pybind11_weaver::CreateEntity<Entity_template_ns>(EntityScope(m),
                                                                registry);
-  auto v23 = pybind11_weaver::CreateEntity<Entity_template_ns_DerivedClass>(
-      v22->AsScope(), registry);
-  auto v24 =
-      pybind11_weaver::CreateEntity<Entity_template_ns_TemplateClass6float9>(
-          v22->AsScope(), registry);
+  auto v24 = pybind11_weaver::CreateEntity<Entity_template_ns_DerivedClass>(
+      v23->AsScope(), registry);
   auto v25 =
+      pybind11_weaver::CreateEntity<Entity_template_ns_TemplateClass6float9>(
+          v23->AsScope(), registry);
+  auto v26 =
       pybind11_weaver::CreateEntity<Entity_template_ns_TemplateClass6int9>(
-          v22->AsScope(), registry);
+          v23->AsScope(), registry);
+  auto v27 = pybind11_weaver::CreateEntity<Entity_DriveVirtual>(EntityScope(m),
+                                                                registry);
 
   auto update_fn = [=]() {
     v0->Update();
@@ -1605,6 +1871,8 @@ DeclFn(pybind11::module &m,
     v23->Update();
     v24->Update();
     v25->Update();
+    v26->Update();
+    v27->Update();
   };
   return {update_fn};
 }

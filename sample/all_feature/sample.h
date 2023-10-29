@@ -126,4 +126,22 @@ public:
 };
 } // namespace template_ns
 
+template <class T> class VirtualBase {
+public:
+  virtual T foo(std::string a) = 0;
+  virtual T inherit_to_final() = 0;
+  virtual T inherit_to_private() = 0;
+  T call_foo() { return foo("996"); }
+};
+
+class DriveVirtual : public VirtualBase<int> {
+public:
+  int foo(std::string a) override { return 0; }
+  int inherit_to_final() final { return 0; }
+  virtual float bar(int) { return 1.0; }
+  float call_bar() { return bar(996); }
+
+private:
+  int inherit_to_private() override { return 0; }
+};
 #endif // PYBIND11_WEAVER_SAMPLE_H

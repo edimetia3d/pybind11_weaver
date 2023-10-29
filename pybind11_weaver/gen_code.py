@@ -12,6 +12,7 @@ from pybind11_weaver.utils import fn, common
 _logger = logging.getLogger(__name__)
 
 entity_template = """
+{top_level_extra}
 
 template <class Pybind11T={handle_type}> struct {bind_struct_name} : public EntityBase {{
   using Pybind11Type = Pybind11T;
@@ -126,7 +127,8 @@ def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, 
                 init_handle_expr=entity.init_default_pybind11_value("parent_h"),
                 binding_stmts="\n".join(entity.update_stmts("handle")),
                 unique_struct_key=f"\"{entity.get_pb11weaver_struct_name()}\"",
-                extra_code=entity.extra_code())
+                extra_code=entity.extra_code(),
+                top_level_extra=entity.top_level_extra_code())
             entity_struct_decls.append(struct_decl)
 
             # generate decl
@@ -199,11 +201,7 @@ def gen_wrapped_pointer_code() -> str:
     create_warped_pointer_bindings = []
     for type in sorted(wrapped_types):
         wrapped_type_binding_code_template = "pybind11_weaver::PointerWrapper<{type}>::FastBind(m,\"{safe_type_name}\");"
-        safe_type_name = type.replace(" ", "")
-        safe_type_name = safe_type_name.replace(",", "_")
-        safe_type_name = safe_type_name.replace("*", "p")
-        safe_type_name = safe_type_name.replace("(", "6")
-        safe_type_name = safe_type_name.replace(")", "9")
+        safe_type_name = common.type_python_name(type)
         create_warped_pointer_bindings.append(
             wrapped_type_binding_code_template.format(type=type, safe_type_name=safe_type_name))
     create_warped_pointer_bindings = "\n".join(create_warped_pointer_bindings)

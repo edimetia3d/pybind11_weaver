@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Optional, Dict
 
 from pylibclang import cindex
 import pylibclang._C
@@ -39,9 +39,19 @@ def is_concreate_template(cursor: cindex.Cursor) -> bool:
     return cursor.get_num_template_arguments() > 0
 
 
+_type_spliter = {":", " ", ",", "<", ">", "&", "*", "(", ")", "&"}
+
+# map type spliter into valid identifier character
+_type_spliter_map = {"<": "6", ">": "9", "::": "_", "&&": "_", "(": "6", "(": "9", "*": "p", " ": ""}
+
+
 def type_python_name(name) -> str:
     """When a type's fullname contains < or > , must be mangled to be able to use in python"""
-    return name.replace("<", "6").replace(">", "9").replace(" ", "").replace(",", "_").replace("::", "_")
+    for k, v in _type_spliter_map.items():
+        name = name.replace(k, v)
+    for k in _type_spliter:
+        name = name.replace(k, "_")
+    return name
 
 
 _used_types = set()
@@ -52,10 +62,49 @@ def get_used_types():
     return _used_types
 
 
-def safe_type_reference(type: cindex.Type) -> str:
+def _sub_type_str(type_str, subs: Dict[str, str]):
+    # parse type_str manually, to get all identifiers and keywords
+
+    tokens = []
+    i = 0
+    end = len(type_str)
+    while i < end:
+        if type_str[i] in [":", "&"]:
+            tag = type_str[i]
+            value = tag + tag
+            if type_str[i + 1] == tag:
+                tokens.append(value)
+                i += 2
+                continue
+            else:
+                tokens.append(tag)
+                i += 1
+                continue
+        elif type_str[i] in _type_spliter:
+            tokens.append(type_str[i])
+            i += 1
+            continue
+        else:
+            start = i
+            while i < end and type_str[i] not in _type_spliter:
+                i += 1
+            new_token = type_str[start:i]
+            if new_token in subs:
+                tokens.append(subs[new_token])
+            elif new_token != "typename":
+                tokens.append(new_token)
+            continue
+    ret = "".join(tokens).replace(" ", "")
+    return ret
+
+
+def safe_type_reference(type: cindex.Type, subs: Dict[str, str] = None) -> str:
     ret = type.get_canonical().spelling
     if "type-parameter" in ret:
-        return type.spelling  # type is a template parameter
+        if subs is None:
+            return type.spelling  # type is a template parameter
+        else:
+            return _sub_type_str(type.spelling, subs)
     return ret
 
 
@@ -101,6 +150,13 @@ def could_member_accessed(cursor: cindex.Cursor):
         cursor, True)
 
 
+def is_marked_final(cursor: cindex.Cursor):
+    for c in cursor.get_children():
+        if c.kind == cindex.CursorKind.CXCursor_CXXFinalAttr:
+            return True
+    return False
+
+
 _deletable_db = dict()
 
 
@@ -109,9 +165,8 @@ def is_type_deletable(type: cindex.Type):
     deletable = True
     if cursor.kind not in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]:
         return True
-    if is_concreate_template(cursor):
-        cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
-        cursor._tu = type._tu
+    cursor, _, _ = get_def_cls_cursor(cursor)
+
     for c in cursor.get_children():
         if c.kind == cindex.CursorKind.CXCursor_Destructor and not could_member_accessed(c):
             deletable = False
@@ -129,3 +184,57 @@ def is_type_deletable(type: cindex.Type):
             break
     _deletable_db[safe_type_reference(type)] = deletable
     return deletable
+
+
+def _is_explicit_instantiation(cursor: cindex.Cursor):
+    tokens = [x.spelling for x in cursor.get_tokens()]
+    for i, token in enumerate(tokens):
+        if token == "template":
+            if tokens[i + 1] == "<":
+                return False
+            else:
+                if tokens[i + 1] == "class" or tokens[i + 1] == "struct":
+                    return True
+                else:
+                    raise NotImplementedError("Only class and struct explicit instantiation supported for now")
+
+
+def _get_template_param_arg_pair(template_cursor: cindex.Cursor, specialized_cursor: cindex.Cursor) -> Optional[Tuple[
+    List[str], Dict[str, str]]]:
+    decls = []
+    subs = dict()
+    for cursor in template_cursor.get_children():
+        if cursor.kind == cindex.CursorKind.CXCursor_TemplateTypeParameter:
+            assert specialized_cursor.get_template_argument_kind(
+                len(decls)) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Type
+            t_param = cursor.spelling
+            substitute = safe_type_reference(specialized_cursor.get_template_argument_type(len(decls)))
+            decls.append(f"using {t_param} = {substitute};")
+            subs[t_param] = substitute
+        elif cursor.kind == cindex.CursorKind.CXCursor_NonTypeTemplateParameter:
+            if specialized_cursor.get_template_argument_kind(
+                    len(decls)) == cindex.TemplateArgumentKind.CXTemplateArgumentKind_Integral:
+                t_param = cursor.spelling
+                substitute = specialized_cursor.get_template_argument_value(len(decls))
+                decls.append(
+                    f"static constexpr int {t_param} = {substitute};")
+                subs[t_param] = substitute
+            else:
+                _logger.error("Only Type and int template parameter supported for now")
+                return None, None
+    return decls, subs
+
+
+def get_def_cls_cursor(cursor: cindex.Cursor) -> Tuple[cindex.Cursor, Optional[List[str]], Optional[Dict[str, str]]]:
+    assert cursor.kind in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]
+    template_decls = []
+    subs = dict()
+    ret_cursor = cursor
+    if is_concreate_template(cursor):
+        template_cursor = pylibclang._C.clang_getSpecializedCursorTemplate(cursor)
+        template_cursor._tu = cursor._tu
+        template_decls, subs = _get_template_param_arg_pair(template_cursor, cursor)
+        if _is_explicit_instantiation(cursor):
+            ret_cursor = template_cursor  # Only when instantiation, return the template cursor
+
+    return ret_cursor, template_decls, subs

@@ -1,4 +1,4 @@
-_# Pybind11 Weaver: Python Binding Code Generator
+# Pybind11 Weaver: Python Binding Code Generator
 
 **Pybind11 Weaver** is a powerful code generator designed to automate the generation of pybind11 code from C++ header
 files. It streamlines the process of creating Python bindings, enabling users to focus on writing critical pybind11 code
@@ -47,6 +47,7 @@ the capabilities of Pybind11 Weaver when working with large C++ only libraries.
 - [ ] Binding for Operator overloading
 - [x] Binding for Class method, method overloading, static method, static method overloading, constructor, constructor
   overloading, class field
+- [x] Trampoline class for virtual function
 - [x] Binding for concreate template instance, that includes: implicit(explicit) class(struct) template instantiation,
   full class(struct) template specialization, extern function template instance declaration.
 - [x] Support class inheritance hierarchy
@@ -54,7 +55,6 @@ the capabilities of Pybind11 Weaver when working with large C++ only libraries.
   control (e.g. `private`, `protected`)
 - [x] Docstring generation from c++ doxygen style comment
 - [x] Namespace hierarchy to Python module hierarchy
-- [ ] Trampoline class for virtual function
 - [x] Dynamic update/disable binding by API call.
 - [x] Static update/disable binding by define macro (Mainly used to disable wrong binding code to avoid compilation
   error)

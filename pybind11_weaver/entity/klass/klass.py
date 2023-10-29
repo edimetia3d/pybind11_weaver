@@ -8,7 +8,7 @@ from pylibclang import cindex
 from pybind11_weaver.entity import entity_base
 from pybind11_weaver.utils import common, scope_list
 from pybind11_weaver import gen_unit
-from pybind11_weaver.entity.klass import method, field
+from pybind11_weaver.entity.klass import method, field, trampoline
 
 _logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ class ClassEntity(entity_base.Entity):
         entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]
         self.extra_methods_codes = []
+        self._top_level_extra = []
         self._dependency = set()
 
     @property
@@ -97,6 +98,10 @@ virtual const char * AddCtor{id}(){{
 
         if not common.is_type_deletable(self.cursor.type):
             t_param_list.append(f"std::unique_ptr<{self.reference_name()},pybind11::nodelete>")
+        tramp = trampoline.Trampoline(self)
+        if tramp is not None:
+            t_param_list.append(tramp.get_trampoline_cls_name())
+            self._top_level_extra.append(tramp.get_defs())
         base_cursor = None
         for cursor in self.cursor.get_children():
             if cursor.kind == cindex.CursorKind.CXCursor_CXXBaseSpecifier:
@@ -136,3 +141,8 @@ virtual const char * AddCtor{id}(){{
     def dependency(self) -> List[str]:
         self.default_pybind11_type_str()  # force update dependency
         return list(self._dependency)
+
+    def top_level_extra_code(self) -> str:
+        """Entity may inject extra code into the generated binding struct."""
+        self.default_pybind11_type_str()  # force update possible trampoline
+        return ",".join(self._top_level_extra)
