@@ -106,6 +106,8 @@ class EntityTree:
 
         pylibclang._C.clang_visitChildren(gu.tu.cursor, visitor, pylibclang._C.voidp(0))
         init_code = "\n".join([f"{prefix} {type_name};" for type_name, prefix in implicit_instantiation.items()])
+        if len(implicit_instantiation) > 0:
+            _logger.info(f"Implicit template instance binding added: \n {init_code}");
         gu.reload_tu(init_code)
         funktion.FunctionEntity._added_func.clear()
 
