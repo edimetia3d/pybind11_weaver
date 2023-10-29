@@ -1,3 +1,4 @@
+import functools
 from typing import List
 import logging
 
@@ -18,13 +19,14 @@ class ClassEntity(entity_base.Entity):
         entity_base.Entity.__init__(self, gu, cursor)
         assert cursor.kind in [cindex.CursorKind.CXCursor_ClassDecl, cindex.CursorKind.CXCursor_StructDecl]
         self.extra_methods_codes = []
+        self._dependency = set()
 
     @property
     def name(self):
         return common.type_python_name(self.cursor.displayname)
 
     def reference_name(self) -> str:
-        return self.cursor.type.spelling
+        return common.safe_type_reference(self.cursor.type)
 
     def get_pb11weaver_struct_name(self) -> str:
         return common.type_python_name(scope_list.get_full_qualified_name(self.cursor))
@@ -89,6 +91,7 @@ virtual const char * AddCtor{id}(){{
             codes.append(f"pybind11_weaver::TryAddDefaultCtor<{self.reference_name()}>({pybind11_obj_sym});")
         return codes, extra
 
+    @functools.lru_cache
     def default_pybind11_type_str(self) -> str:
         t_param_list = [self.reference_name()]
 
@@ -107,6 +110,7 @@ virtual const char * AddCtor{id}(){{
         if (base_cursor is not None
                 and self.could_user_class_export(base_cursor.type)):
             t_param_list.append(common.safe_type_reference(base_cursor.type))
+            self._dependency.add(common.safe_type_reference(base_cursor.type))
         return f"pybind11::class_<{','.join(t_param_list)}>"
 
     def extra_code(self) -> str:
@@ -128,3 +132,7 @@ virtual const char * AddCtor{id}(){{
         if parent_is_struct and not common.could_member_accessed(cursor):
             return False
         return self.gu.is_cursor_in_inputs(cursor)
+
+    def dependency(self) -> List[str]:
+        self.default_pybind11_type_str()  # force update dependency
+        return list(self._dependency)

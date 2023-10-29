@@ -1,6 +1,7 @@
 import os.path
 from typing import Dict, List
 import shutil
+import sys
 import logging
 
 from pybind11_weaver.entity import entity_base, klass, enum
@@ -89,46 +90,60 @@ pybind11_weaver::_PointerWrapperBase::FastBind(m);
 """
 
 
-def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, beg_id: int):
+def gen_binding_codes(entities: Dict[str, entity_base.Entity], parent_sym: str, beg_id: int,
+                      generated_entities: Dict[str, entity_base.Entity]):
     next_id = beg_id
     entity_struct_decls: List[str] = []
     create_entity_var_stmts: List[str] = []
     update_entity_var_stmts: List[str] = []
     exported_type: List[str] = []
     sorted_keys = sorted(entities.keys())
-    for key in sorted_keys:
-        entity = entities[key]
-        assert entity is not None
-        if isinstance(entity, klass.ClassEntity) or isinstance(entity, enum.EnumEntity):
-            exported_type.append(common.safe_type_reference(common.remove_const_ref_pointer(entity.cursor.type)))
-        entity_obj_sym = f"v{next_id}"
-        entity_struct_name = "Entity_" + entity.get_pb11weaver_struct_name()
-        # generate body
-        struct_decl = entity_template.format(
-            handle_type=entity.default_pybind11_type_str(),
-            entity_struct_name=entity_struct_name,
-            bind_struct_name="Bind_" + entity.get_pb11weaver_struct_name(),
-            parent_expr=parent_sym,
-            init_handle_expr=entity.init_default_pybind11_value("parent_h"),
-            binding_stmts="\n".join(entity.update_stmts("handle")),
-            unique_struct_key=f"\"{entity.get_pb11weaver_struct_name()}\"",
-            extra_code=entity.extra_code())
-        entity_struct_decls.append(struct_decl)
+    used_keys = set()
+    while len(used_keys) != len(sorted_keys):
+        for key in sorted_keys:
+            entity = entities[key]
+            bypass = False
+            for d in entity.dependency():
+                if d not in generated_entities:
+                    bypass = True
+            if bypass:
+                continue
+            if key in used_keys:
+                continue
+            used_keys.add(key)
+            generated_entities[entity.reference_name()] = entity
+            assert entity is not None
+            if isinstance(entity, klass.ClassEntity) or isinstance(entity, enum.EnumEntity):
+                exported_type.append(common.safe_type_reference(common.remove_const_ref_pointer(entity.cursor.type)))
+            entity_obj_sym = f"v{next_id}"
+            entity_struct_name = "Entity_" + entity.get_pb11weaver_struct_name()
+            # generate body
+            struct_decl = entity_template.format(
+                handle_type=entity.default_pybind11_type_str(),
+                entity_struct_name=entity_struct_name,
+                bind_struct_name="Bind_" + entity.get_pb11weaver_struct_name(),
+                parent_expr=parent_sym,
+                init_handle_expr=entity.init_default_pybind11_value("parent_h"),
+                binding_stmts="\n".join(entity.update_stmts("handle")),
+                unique_struct_key=f"\"{entity.get_pb11weaver_struct_name()}\"",
+                extra_code=entity.extra_code())
+            entity_struct_decls.append(struct_decl)
 
-        # generate decl
-        create_entity_var_stmts.append(
-            f"auto {entity_obj_sym} = pybind11_weaver::CreateEntity<{entity_struct_name}>({parent_sym}, registry);")
+            # generate decl
+            create_entity_var_stmts.append(
+                f"auto {entity_obj_sym} = pybind11_weaver::CreateEntity<{entity_struct_name}>({parent_sym}, registry);")
 
-        # generate updates
-        update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")
+            # generate updates
+            update_entity_var_stmts.append(f"{entity_obj_sym}->Update();")
 
-        # recursive call to children
-        ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->AsScope()", next_id + 1)
-        entity_struct_decls += ret[0]
-        create_entity_var_stmts += ret[1]
-        update_entity_var_stmts += ret[2]
-        exported_type += ret[3]
-        next_id = ret[4]
+            # recursive call to children
+            ret = gen_binding_codes(entities[entity.name].children, entity_obj_sym + "->AsScope()", next_id + 1,
+                                    generated_entities)
+            entity_struct_decls += ret[0]
+            create_entity_var_stmts += ret[1]
+            update_entity_var_stmts += ret[2]
+            exported_type += ret[3]
+            next_id = ret[4]
 
     return entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, exported_type, next_id
 
@@ -143,9 +158,10 @@ def gen_code(config_file: str):
             ns_s = gu.io_config.root_module_namespace.split("::")
             for ns in ns_s:
                 target_entities = target_entities[ns].children
+        generated_entities = dict()
         entity_struct_decls, create_entity_var_stmts, update_entity_var_stmts, exported_type, _ = gen_binding_codes(
             entities=target_entities,
-            parent_sym="EntityScope(m)", beg_id=0)
+            parent_sym="EntityScope(m)", beg_id=0, generated_entities=generated_entities)
 
         warn_unexported_types(exported_type)
 

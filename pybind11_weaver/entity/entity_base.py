@@ -2,7 +2,7 @@ import abc
 import functools
 import weakref
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from pylibclang import cindex
 
@@ -105,3 +105,10 @@ class Entity(abc.ABC):
     def extra_code(self) -> str:
         """Entity may inject extra code into the generated binding struct."""
         return ""
+
+    def dependency(self) -> List[str]:
+        """Entity may set dependency to other entity, so that the binding struct will be generated after the dependency.
+
+        The dependency is the reference name of the entity.
+        """
+        return []
