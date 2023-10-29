@@ -7,7 +7,6 @@ import pylibclang._C
 from pylibclang import cindex
 
 from pybind11_weaver.utils import fn, common
-from pybind11_weaver.entity import entity_base
 from . import klass
 
 _logger = logging.getLogger(__name__)
@@ -18,6 +17,13 @@ virtual const char * AddMethod_{method_identifier}(){{
 }}
 """
 _call_bind_method = """AddMethod_{method_identifier}();"""
+
+
+def get_def_type(cursor):
+    if cursor.is_static_method():
+        return "def_static"
+    else:
+        return "def"
 
 
 class Method:
@@ -41,7 +47,7 @@ class Method:
 const char * _pb11_weaver_comment_str = {comment};
 {disable_bind}
 #ifndef {self.disable_mark}
-{pybind11_obj_sym}.{self.get_def_type()}(\"{self.bind_name}\",{fn_ptr}{',_pb11_weaver_comment_str' if should_add else ''});
+{pybind11_obj_sym}.{get_def_type(self.fn_cursor)}(\"{self.bind_name}\",{fn_ptr}{',_pb11_weaver_comment_str' if should_add else ''});
 #endif
 return _pb11_weaver_comment_str;
 """
@@ -49,12 +55,6 @@ return _pb11_weaver_comment_str;
 
     def get_call_stmt(self):
         return _call_bind_method.format(method_identifier=self.identifier_name)
-
-    def get_def_type(self):
-        if self.fn_cursor.is_static_method():
-            return "def_static"
-        else:
-            return "def"
 
 
 def is_explicit_instantiation(cursor: cindex.Cursor):
@@ -94,7 +94,7 @@ class GenMethod:
 
     def __init__(self, kls_entity: "klass.KlassEntity"):
         self.kls_entity = kls_entity
-        self.added_method: Dict[str, int] = collections.defaultdict(int)
+        self.added_method: Dict[str, List[Method]] = collections.defaultdict(list)
 
     @staticmethod
     def is_virtual(cursor: cindex.Cursor):
@@ -109,7 +109,7 @@ class GenMethod:
         codes = []
         extra_codes: List[str] = []
         kls_entity = self.kls_entity
-        methods: Dict[str, Method] = dict()
+        methods = []
 
         root_cursor = kls_entity.cursor
         if common.is_concreate_template(kls_entity.cursor):
@@ -128,17 +128,25 @@ class GenMethod:
                     cursor) and not common.is_operator_overload(cursor):
                 bind_name = fn.fn_python_name(cursor)
                 unique_name = bind_name
-                if self.added_method[bind_name] != 0:
-                    unique_name += str(self.added_method[bind_name])
-                self.added_method[bind_name] += 1
+                while len(self.added_method[bind_name]) != 0:
+                    if get_def_type(cursor) != get_def_type(self.added_method[bind_name][0].fn_cursor):
+                        bind_name = bind_name + "_"
+                        unique_name = bind_name
+                        _logger.warning(
+                            f"pybind11 does not support mix def and def_static overloading, bind {cursor.spelling} to {unique_name}")
+
+                    else:
+                        unique_name = bind_name + str(len(self.added_method[bind_name]))
+                        break
                 self.is_virtual(cursor)  # print warning
                 disable_mark = f"PB11_WEAVER_DISABLE_{self.kls_entity.get_pb11weaver_struct_name()}_{unique_name}"
-                methods[unique_name] = Method(cursor, kls_entity.gu.io_config.gen_docstring, bind_name, unique_name,
-                                              disable_mark)
+                methods.append(Method(cursor, kls_entity.gu.io_config.gen_docstring, bind_name, unique_name,
+                                      disable_mark))
+                self.added_method[bind_name].append(methods[-1])
 
         call_method_bind = []
         method_bind_body = []
-        for _, method in methods.items():
+        for method in methods:
             call_method_bind.append(method.get_call_stmt())
             method_bind_body.append(method.get_def_stmt(pybind11_obj_sym))
 
