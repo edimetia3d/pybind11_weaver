@@ -1,7 +1,7 @@
 //
 // License: MIT
 //
-#include "sample.h"
+#include "c_lib.h"
 
 void TopFunction(int) {}
 void TopFunction(std::string &) {}

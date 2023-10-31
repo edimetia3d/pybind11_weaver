@@ -7,7 +7,7 @@
  * the public API.
  */
 
-#include "sample.h"
+#include "c_lib/c_lib.h"
 
 /**
  * Two things need to be done to bind a template function:

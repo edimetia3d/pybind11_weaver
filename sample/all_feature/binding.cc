@@ -1,7 +1,7 @@
 
 #include <pybind11/pybind11.h>
 
-#include "sample_binding.cc.inc"
+#include "_binding.cc.inc"
 
 // When you want to customize the binding of `XXXX`, you have 2 options:
 // a. Inherit the template class `Bind_XXXX<>` and implement
@@ -44,7 +44,7 @@ public:
   }
 };
 } // namespace
-PYBIND11_MODULE(all_feature_module, m) {
+PYBIND11_MODULE(all_feature, m) {
   pybind11_weaver::CustomBindingRegistry reg;
   reg.DisableBinding<Entity_disabled_space>();
   reg.DisableBinding<Entity_disabled_member_disabled_Foo>();

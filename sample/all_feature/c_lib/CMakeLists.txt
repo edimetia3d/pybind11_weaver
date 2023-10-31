@@ -1,0 +1,1 @@
+add_library(all_feature_c_lib SHARED c_lib.cc)

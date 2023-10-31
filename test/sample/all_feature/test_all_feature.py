@@ -1,8 +1,8 @@
 import unittest
 import random
 
-import all_feature_module as m
-from all_feature_module.earth import creatures
+import sample.all_feature.all_feature as m
+from sample.all_feature.all_feature.earth import creatures
 
 
 class TestAll(unittest.TestCase):

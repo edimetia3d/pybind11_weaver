@@ -4,14 +4,15 @@
 files. It streamlines the process of creating Python bindings, enabling users to focus on writing critical pybind11 code
 and offloading the tedious work to Pybind11 Weaver.
 
-This tool takes a [sample.h](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/sample.h) file
+This tool takes a [c_lib.h](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/c_lib/c_lib.h)
+file
 and transforms it into
-a [sample_binding.cc.inc](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/sample_binding.cc.inc)
+a [_binding.cc.inc](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/_binding.cc.inc)
 file using [cfg.yaml](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/cfg.yaml) as a guide.
 Following the binding with a single line `auto update_guard = DeclFn(m);`
 in [binding.cc](https://github.com/edimetia3d/pybind11_weaver/blob/main/sample/all_feature/binding.cc), all elements
 from the header file become accessible in Python as demonstrated in
-this [example](https://github.com/edimetia3d/pybind11_weaver/blob/main/test/sample_test/launch_module.py).
+this [example](https://github.com/edimetia3d/pybind11_weaver/blob/main/test/sample/all_feature/test_all_feature.py).
 
 A more pragmatic example is available in [pylibclang](https://github.com/edimetia3d/pylibclang), a comprehensive Python
 wrapper for libclang that uses Pybind11 Weaver to generate the binding code.

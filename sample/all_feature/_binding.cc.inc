@@ -1,7 +1,7 @@
 
-// GENERATED AT 10/30/2023, 16:15:51
+// GENERATED AT 10/31/2023, 12:10:00
 
-#include "sample.h"
+#include "c_lib/c_lib.h"
 #include "template_pb11_weaver_helper.h"
 
 #ifndef GITHUB_COM_PYBIND11_WEAVER

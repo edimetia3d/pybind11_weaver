@@ -3,5 +3,5 @@ common_config:
   include_directories: [ "${CFG_DIR}" ]
 
 io_configs:
-  - inputs: [ "sample.h","template_pb11_weaver_helper.h" ]
-    output: "${CFG_DIR}/sample_binding.cc.inc"
+  - inputs: [ "c_lib/c_lib.h","template_pb11_weaver_helper.h" ]
+    output: "${CFG_DIR}/_binding.cc.inc"
