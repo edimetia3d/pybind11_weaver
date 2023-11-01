@@ -1,0 +1,46 @@
+# Some config only marcos could be used in this file, they will be replaced as plain text before parsing the config file.
+# 1. ${CFG_DIR} will be replaced to the directory of this config file
+
+
+common_config:
+  # Common config stores things that will be shared by all io_configs
+
+  compiler: null
+  # [Optional] Path to compiler, used to detect system level include directories
+  # If not provided, pybind11 will try to find a compiler in the system.
+  # If there is no compiler found, user should provide all system includes in include_directories
+  cxx_flags: [ "-std=c++11", ]
+  # [Optional] A list of cxx flags shared by all io_configs.
+  # Note that any cxx flag that may affect the semantic of the code should be provided here.
+  # e.g. some marcos that may affect conditional compilation should be provided here.
+  include_directories: [ "/path/to/foo","/path/to/bar" , "${CFG_DIR}" ]
+  # [Optional] A list of include path
+  # 1. Include path could also be provided by -I flag of cxx_flags
+  # 2. All include path should be absolute path
+
+
+
+io_configs:
+  # A list of dict that specifies files that needed to be generated
+  - inputs: [ "a.h","<bar.h>" ,"glob('${CFG_DIR}/**/*.h', recursive = True)" ]
+    # Must have, a list of path of header files
+    # these files should be able to find by C++ `#include` directive.
+    # valid path could be '"path/to/foo.h"' or "path/to/foo.h" or "<path/to/foo.h>"
+    # A pyton expression of `glob(...)` is also supported, it will be executed by python's `glob.glob` function.
+    output: "/path/to/output"
+    # Must have, the path of the generated python file, only absolute path is supported.
+    decl_fn_name: "DeclFn"
+    # [Optional] The name of the function that will be used to declare the entities, default is "DeclFn".
+    extra_cxx_flags: [ ]
+    # [Optional] flags only used for this io_config
+    root_module_namespace: ""
+    # [Optional] Only generate code for entities under this namespace, default is the top level namespace.
+    gen_docstring: true
+    # [Optional] Whether to generate docstring for the generated python code
+    strict_visibility_mode: false
+    # [Optional] Only check visibility on function/methods/field, all struct/class/enum will be treated as public
+    # If set to true, any scope (namespace/struct/class) that is not visible will cause all its children to be ignored.
+  - inputs: [ "b.h" ]
+    output: "/path/to/output"
+    # Multiple io_configs can be specified in one config file
+

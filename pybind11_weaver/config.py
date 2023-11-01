@@ -26,6 +26,8 @@ class IOConfig:
 
     def _normalize_inputs(self):
         self.inputs = self._to_valid_include_path(self.inputs)
+        if len(self.inputs) == 0 or self.output == "":
+            raise ValueError("Inputs and output can not be empty")
         self._inputs_to_relative_path()
 
     @staticmethod
