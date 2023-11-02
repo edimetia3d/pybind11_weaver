@@ -5,7 +5,7 @@
 common_config:
   # Common config stores things that will be shared by all io_configs
 
-  compiler: null
+  compiler: ""
   # [Optional] Path to compiler, used to detect system level include directories
   # If not provided, pybind11 will try to find a compiler in the system.
   # If there is no compiler found, user should provide all system includes in include_directories

@@ -1,12 +1,18 @@
-from typing import List, Optional
 import glob
 import os
-
-import yaml
-import attrs
 import sysconfig
+from typing import List
+
+import attrs
 import pybind11
+import yaml
+
 import pybind11_weaver.third_party.ccsyspath as ccsyspath
+
+
+def _unique_flags(flags: List[str]) -> List[str]:
+    jonined = " ".join(flags)
+    return list(set(jonined.split(" ")).difference({""}))
 
 
 @attrs.define
@@ -21,13 +27,13 @@ class IOConfig:
     strict_visibility_mode: bool = False
 
     def normalize(self, common_config: "CommonConfig"):
-        self._cxx_flags = common_config.cxx_flags + self.extra_cxx_flags
+        if len(self.inputs) == 0 or self.output == "":
+            raise ValueError("Inputs and output can not be empty")
+        self._cxx_flags = common_config.cxx_flags + _unique_flags(self.extra_cxx_flags)
         self._normalize_inputs()
 
     def _normalize_inputs(self):
         self.inputs = self._to_valid_include_path(self.inputs)
-        if len(self.inputs) == 0 or self.output == "":
-            raise ValueError("Inputs and output can not be empty")
         self._inputs_to_relative_path()
 
     @staticmethod
@@ -70,20 +76,20 @@ class IOConfig:
 
 @attrs.define
 class CommonConfig:
-    compiler: Optional[str] = None
+    compiler: str = ""
     cxx_flags: List[str] = attrs.field(factory=list)
     include_directories: List[str] = attrs.field(factory=list)
 
     def normalize(self):
         include_sys_flags = self._get_default_include_flags()
         include_usr_flags = ["-I" + path for path in self.include_directories]
-        self.cxx_flags = self.cxx_flags + include_sys_flags + include_usr_flags
+        self.cxx_flags = _unique_flags(self.cxx_flags) + include_sys_flags + include_usr_flags
 
     def _get_default_include_flags(self) -> List[str]:
         try_to_use = ["c++", "g++", "clang++"]
         if os.environ.get("CXX") is not None:
             try_to_use = [os.environ.get("CXX")] + try_to_use
-        if self.compiler is not None:
+        if self.compiler != "":
             try_to_use = [self.compiler] + try_to_use
         cxx_sys_path = []
         for compiler in try_to_use:
@@ -91,7 +97,6 @@ class CommonConfig:
             if len(cxx_sys_path) > 0:
                 self.compiler = compiler
                 break
-        assert len(cxx_sys_path) > 0, "Can not find c++ headers"
         full_list = [d.decode("utf-8") for d in cxx_sys_path] + [
             sysconfig.get_path("include"),
             pybind11.get_include(),
@@ -99,16 +104,29 @@ class CommonConfig:
         return ["-I" + path for path in full_list]
 
 
-def _safe_load_one_cls(cls, possible_values):
+def _safe_load_one_cls(cls, name, possible_v):
+    if not attrs.has(cls):
+        if hasattr(cls, "__origin__"):
+            assert cls.__origin__ == list
+            if not isinstance(possible_v, list):
+                raise ValueError(f"Expect '{name}' to be a list, but got {possible_v}")
+            element_t = cls.__args__[0]
+            values = []
+            for v in possible_v:
+                values.append(_safe_load_one_cls(element_t, f"value in {name}", v))
+            return values
+        else:
+            if not isinstance(possible_v, cls):
+                raise ValueError(f"Expect '{name}' to be a {cls}, but got {possible_v}")
+            return possible_v
     instance = cls()
     attrs.resolve_types(cls)
+    if not isinstance(possible_v, dict):
+        raise ValueError(f"Expect '{name}' to be a dict, but got {possible_v}")
     for field in attrs.fields(cls):
-        if field.name in possible_values:
-            if attrs.has(field.type):
-                setattr(instance, field.name,
-                        _safe_load_one_cls(field.type, possible_values[field.name]))
-            else:
-                setattr(instance, field.name, possible_values[field.name])
+        if field.name in possible_v:
+            setattr(instance, field.name,
+                    _safe_load_one_cls(field.type, f"{name}.{field.name}", possible_v[field.name]))
     return instance
 
 
@@ -119,6 +137,8 @@ class MainConfig:
 
     @staticmethod
     def load(file_or_content: str) -> "MainConfig":
+        if len(file_or_content) == 0:
+            raise ValueError("file_or_content can not be empty")
         content = file_or_content
         if os.path.exists(content):  # it is a file
             with open(content, "r") as yml:
@@ -126,10 +146,10 @@ class MainConfig:
                 content = content.replace("${CFG_DIR}", os.path.dirname(os.path.abspath(file_or_content)))
         cfg = yaml.safe_load(content)
 
-        main_config = _safe_load_one_cls(MainConfig, cfg)
+        main_config = _safe_load_one_cls(MainConfig, "MainConfig", cfg)
         main_config.common_config.normalize()
         for i, io_config in enumerate(main_config.io_configs):
-            new_io_cfg = _safe_load_one_cls(IOConfig, io_config)
-            new_io_cfg.normalize(main_config.common_config)
-            main_config.io_configs[i] = new_io_cfg
+            io_config.normalize(main_config.common_config)
+        if len(main_config.io_configs) == 0:
+            raise ValueError("No IOConfig is specified")
         return main_config
