@@ -28,6 +28,10 @@ wrapper for libclang that uses Pybind11 Weaver to generate the binding code.
 generate the binding code for [libtooling](https://clang.llvm.org/docs/LibTooling.html), and will be used to demonstrate
 the capabilities of Pybind11 Weaver when working with large C++ only libraries.
 
+## Docs
+
+Check https://github.com/edimetia3d/pybind11_weaver/wiki
+
 ## Key Features
 
 1. **Highly Customizable:** While the default configuration is super simple and suitable for most cases, it allows for
@@ -97,30 +101,6 @@ code by yourself.
 8. Test the module in Python, find bugs, and go to step 5 to fix them.
 
 Also, if you encountered too many problems, you are welcome to open an issue at github, or create a PR to fix it.
-
-## Installation
-
-### Via PYPI
-
-```bash
-python3 -m pip install pybind11-weaver
-```
-
-### From Source
-
-* To install from source:
-
-```bash
-git clone https://github.com/edimetia3d/pybind11_weaver
-python3 -m pip install $(pwd)/pybind11_weaver/
-```
-
-* To run from source (Editable/Develop Mode):
-
-```bash
-git clone https://github.com/edimetia3d/pybind11_weaver
-python3 -m pip install -e $(pwd)/pybind11_weaver/ -v --config-settings editable_mode=compat
-```
 
 ## How it works
 
