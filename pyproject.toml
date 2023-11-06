@@ -22,13 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Compilers"
 ]
-dependencies = [
-    "pylibclang",
-    "PyYAML",
-    "pybind11",
-    "attrs",
-]
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 
 [project.urls]
 Homepage = "https://github.com/edimetia3d/pybind11_weaver"
@@ -38,6 +32,7 @@ Changelog = "https://github.com/edimetia3d/pybind11_weaver/releases"
 
 [tool.setuptools.dynamic]
 version = { attr = "pybind11_weaver.__VERSION__" }
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools]
 zip-safe = false
